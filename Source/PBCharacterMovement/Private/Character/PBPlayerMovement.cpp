@@ -879,7 +879,7 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 		/*UPBGameplayStatics::PlaySound(Sound, GetCharacterOwner(),
 									  // FVector(0.0f, 0.0f, -GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()),
 									  EPBSoundCategory::Footstep);*/
-		
+		UGameplayStatics::SpawnSoundAttached(Sound, GetCharacterOwner()->GetRootComponent());
 	}
 }
 
