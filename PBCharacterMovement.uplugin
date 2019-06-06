@@ -1,0 +1,18 @@
+{
+	"FileVersion": 3,
+	"Version": 10,
+	"VersionName": "1.0",
+	"FriendlyName": "Project Borealis Character Movement",
+	"Description": "Half-Life 2 style character movement in Unreal Engine 4.",
+	"Category": "Other",
+	"CreatedBy": "Project Borealis",
+	"CreatedByURL": "https://www.projectborealis.com",
+	"CanContainContent": false,
+	"Modules": [
+		{
+			"Name": "PBCharacterMovement",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
