@@ -29,6 +29,9 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	// Camera eye level
 	BaseEyeHeight = 53.34f;
+
+	// get pointer to movement component
+	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
 }
 
 void APBPlayerCharacter::BeginPlay()
