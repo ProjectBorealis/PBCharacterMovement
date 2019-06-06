@@ -10,7 +10,8 @@ Includes all your standard classic FPS movement from HL2:
 * Circle strafing
 * Wall strafing
 * Ramp sliding/trimping/collision boosting
-* Smooth crouching and uncrouching
+* Smooth crouching and uncrouching, and crouch jumping
+* Optional pogo jumping (automatic bunnyhopping)
 * WIP Surfing
 
 ## Note
