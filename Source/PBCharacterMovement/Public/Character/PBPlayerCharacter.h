@@ -149,5 +149,11 @@ public:
 	UFUNCTION()
 	void LookUp(bool bIsPure, float Rate);
 
+	/** Change camera height */
+	void RecalculateBaseEyeHeight() override
+	{
+		Super::Super::RecalculateBaseEyeHeight();
+	}
+
 	bool CanCrouch() override;
 };
