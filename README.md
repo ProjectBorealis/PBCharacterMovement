@@ -14,7 +14,12 @@ Includes all your standard classic FPS movement from HL2:
 * Optional pogo jumping (automatic bunnyhopping)
 * WIP Surfing
 
-## Note
+## Binaries
+
+Binaries are compiled for `4.22`, and will work on Blueprint and C++ projects.
+If you are using a different version of Unreal Engine 4, you will need to recompile the plugin.
+
+## Redistribution note
 
 Our ladder movement code is game specific and is not publicly redistributed at this time.
 
