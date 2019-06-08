@@ -27,7 +27,7 @@ Some functionality, like sprinting speed logic, is not publicly redistributed at
 
 # Instructions
 
-1. Paste the [PBCharacterMovement folder](https://github.com/ProjectBorealis/PBCharacterMovement/archive/master.zip) into your project's `Plugins/` folder, or in your engine `Plugins/` folder.
+1. Paste the [PBCharacterMovement folder](https://github.com/ProjectBorealis/PBCharacterMovement/archive/master.zip) into your project's `Plugins/` folder.
 2. Open your Unreal Engine project.
 3. Add input action bindings for jump and crouch (Settings > Project Settings > Engine > Input). Add axis bindings for forward, right, look up and turn.
 4. Create a new player controller in Blueprint or C++. Here's a [simple Blueprint example](https://blueprintue.com/blueprint/l7vxktwk/).
