@@ -124,7 +124,7 @@ void APBPlayerCharacter::OnJumped_Implementation()
 				SpeedAddition -= NewSpeed - MaxBoostedSpeed;
 			}
 
-			if (SpeedAddition <= 0.0f && && CVarBHop->GetInt() != 0)
+			if (SpeedAddition <= 0.0f && CVarBHop->GetInt() != 0)
 			{
 				return;
 			}
