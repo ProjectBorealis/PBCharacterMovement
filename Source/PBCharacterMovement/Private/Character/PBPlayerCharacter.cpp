@@ -99,50 +99,58 @@ void APBPlayerCharacter::OnJumped_Implementation()
 	{
 		LastJumpBoostTime = GetWorld()->GetTimeSeconds();
 		// Boost forward speed on jump
-		FVector Facing = GetActorForwardVector();
+		FVector Vel = GetMovementComponent()->Velocity;
+		FVector ForwardVec = GetActorForwardVector();
+		float Ang = ForwardVec.CosineAngle2D(Vel);
+		ForwardVec = GetMovementComponent()->Velocity * Ang;
+		ForwardVec.Z = 0.f;
 		// Give it its backward/forward direction
-		float ForwardSpeed;
-		FVector Input = MovementPtr->GetLastInputVector().GetClampedToMaxSize2D(1.0f) * MovementPtr->GetMaxAcceleration();
-		ForwardSpeed = Input | Facing;
-		// Adjust how much the boost is
-		float SpeedBoostPerc = (bIsSprinting || bIsCrouched) ? 0.1f : 0.5f;
-		// How much we are boosting by
-		float SpeedAddition = FMath::Abs(ForwardSpeed * SpeedBoostPerc);
-		// We can only boost up to this much
-		float MaxBoostedSpeed = GetCharacterMovement()->GetMaxSpeed() + GetCharacterMovement()->GetMaxSpeed() * SpeedBoostPerc;
-		// Calculate new speed
-		float NewSpeed = SpeedAddition + GetMovementComponent()->Velocity.Size2D();
-		float SpeedAdditionNoClamp = SpeedAddition;
-
-		// Scale the boost down if we are going over
-		if (NewSpeed > MaxBoostedSpeed)
+		float ForwardSpeed = (Ang >= 0 ? ForwardVec.Size2D() : -1.f * ForwardVec.Size2D());
+		if (ForwardVec.Normalize())
 		{
-			SpeedAddition -= NewSpeed - MaxBoostedSpeed;
-		}
-
-		if (ForwardSpeed < -MovementPtr->GetMaxAcceleration() * FMath::Sin(0.6981f))
-		{
-			// Boost backwards if we're going backwards
-			SpeedAddition *= -1.0f;
-			SpeedAdditionNoClamp *= -1.0f;
-		}
-
-		// Boost our velocity
-		FVector JumpBoostedVel = GetMovementComponent()->Velocity + Facing * SpeedAddition;
-		float JumpBoostedSizeSq = JumpBoostedVel.SizeSquared2D();
-		if (CVarBunnyhop->GetInt() != 0)
-		{
-			FVector JumpBoostedUnclampVel = GetMovementComponent()->Velocity + Facing * SpeedAdditionNoClamp;
-			float JumpBoostedUnclampSizeSq = JumpBoostedUnclampVel.SizeSquared2D();
-			if (JumpBoostedUnclampSizeSq > JumpBoostedSizeSq)
+			// Adjust how much the boost is
+			float SpeedBoostPerc = (bIsSprinting || bIsCrouched) ? 0.1f : 0.5f;
+			// How much we are boosting by
+			float SpeedAddition = FMath::Abs(ForwardSpeed * SpeedBoostPerc);
+			// We can only boost up to this much
+			float MaxBoostedSpeed = GetCharacterMovement()->GetMaxSpeed() + GetCharacterMovement()->GetMaxSpeed() * SpeedBoostPerc;
+			// Calculate new speed
+			float NewSpeed = SpeedAddition + GetMovementComponent()->Velocity.Size2D();
+			float SpeedAdditionNoClamp = SpeedAddition;
+			
+			// Scale the boost down if we are going over
+			if (NewSpeed > MaxBoostedSpeed)
 			{
-				JumpBoostedVel = JumpBoostedUnclampVel;
-				JumpBoostedSizeSq = JumpBoostedUnclampSizeSq;
+				SpeedAddition -= NewSpeed - MaxBoostedSpeed;
 			}
-		}
-		if (GetMovementComponent()->Velocity.SizeSquared2D() < JumpBoostedSizeSq)
-		{
-			GetMovementComponent()->Velocity = JumpBoostedVel;
+
+			if (SpeedAddition <= 0.0f && && CVarBHop->GetInt() != 0)
+			{
+				return;
+			}
+			else if (ForwardSpeed < 0.0f)
+			{
+				// Boost backwards if needed if (ForwardSpeed < 0.f)
+				SpeedAddition *= -1.0f;
+			}
+
+			// Boost our velocity
+			FVector JumpBoostedVel = GetMovementComponent()->Velocity + ForwardVec * SpeedAddition;
+			float JumpBoostedSizeSq = JumpBoostedVel.SizeSquared2D();
+			if (CVarBunnyhop->GetInt() != 0)
+			{
+				FVector JumpBoostedUnclampVel = GetMovementComponent()->Velocity + ForwardVec * SpeedAdditionNoClamp;
+				float JumpBoostedUnclampSizeSq = JumpBoostedUnclampVel.SizeSquared2D();
+				if (JumpBoostedUnclampSizeSq > JumpBoostedSizeSq)
+				{
+					JumpBoostedVel = JumpBoostedUnclampVel;
+					JumpBoostedSizeSq = JumpBoostedUnclampSizeSq;
+				}
+			}
+			if (GetMovementComponent()->Velocity.SizeSquared2D() < JumpBoostedSizeSq)
+			{
+				GetMovementComponent()->Velocity = JumpBoostedVel;
+			}
 		}
 	}
 }
