@@ -21,9 +21,7 @@ If you are using a different version of Unreal Engine 4, you will need to recomp
 
 ## Redistribution note
 
-Our ladder movement code is game specific and is not publicly redistributed at this time.
-
-Some functionality, like sprinting speed logic, is not publicly redistributed at this time.
+Our ladder movement code and sprinting speed logic is game specific and is not publicly redistributed at this time.
 
 # Instructions
 

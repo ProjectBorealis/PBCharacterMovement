@@ -66,10 +66,10 @@ private:
 
 	/** Pointer to player movement component */
 	UPBPlayerMovement* MovementPtr;
-	
+
 	/** True if we're sprinting*/
 	bool bIsSprinting;
-	
+
 	bool bWantsToWalk;
 
 	virtual void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
@@ -155,5 +155,5 @@ public:
 		Super::Super::RecalculateBaseEyeHeight();
 	}
 
-	bool CanCrouch() override;
+	virtual bool CanCrouch() const override;
 };

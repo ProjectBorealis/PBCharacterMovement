@@ -262,7 +262,7 @@ void APBPlayerCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent con
 	}
 }
 
-bool APBPlayerCharacter::CanCrouch()
+bool APBPlayerCharacter::CanCrouch() const
 {
 	return Super::CanCrouch() || GetCharacterMovement()->bCheatFlying;
 }
