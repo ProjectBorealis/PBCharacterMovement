@@ -14,6 +14,8 @@ Includes all your standard classic FPS movement from HL2:
 * Optional pogo jumping (automatic bunnyhopping)
 * WIP Surfing
 
+More info in this blog post: https://www.projectborealis.com/movement.
+
 ## Binaries
 
 Binaries are compiled for `4.22`, and will work on Blueprint and C++ projects.
