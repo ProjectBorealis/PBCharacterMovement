@@ -18,8 +18,19 @@ More info in this blog post: https://www.projectborealis.com/movement.
 
 ## Binaries
 
-Binaries are compiled for `4.22`, and will work on Blueprint and C++ projects.
+Binaries are compiled for `4.23`, and will work on Blueprint and C++ projects.
 If you are using a different version of Unreal Engine 4, you will need to recompile the plugin.
+
+To recompile the plugin (Windows):
+1. Open a command prompt in `Path\To\UE_4.{version}\Engine\Build\BatchFiles` 
+
+    * Example: `C:\Program Files\Epic Games\UE_4.23\Engine\Build\BatchFiles`
+
+2. ```bash
+   RunUAT.bat BuildPlugin -Plugin="Path\to\plugin\PBCharacterMovement.uplugin" -Package="Path\to\compiled\plugin" -targetplatforms=Win64
+   ```
+
+
 
 ## Redistribution note
 
@@ -35,4 +46,4 @@ Our ladder movement code and sprinting speed logic is game specific and is not p
 6. Create a gamemode with Default Pawn set to your Blueprint character class, and Player Controller set to your player controller.
 7. Enjoy the movement!
 
-You may also want to use HL2 gravity settings. Go to Settings > Project Settings > Engine > Physics > Constants > Default Gravity Z and set it to `-1143`.
+You may also want to use HL2 gravity settings. Go to Edit > Project Settings > Engine > Physics > Constants > Default Gravity Z and set it to `-1143`.

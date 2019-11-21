@@ -53,28 +53,28 @@ public:
 
 private:
 	/** The physical material associated with this move step sound */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	TEnumAsByte<enum EPhysicalSurface> SurfaceMaterial;
 
 	/** The list of sounds to randomly choose from when stepping left */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	TArray<USoundCue*> StepLeftSounds;
 
 	/** The list of sounds to randomly choose from when stepping right */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	TArray<USoundCue*> StepRightSounds;
 
 	/** The list of sounds to randomly choose from when jumping */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	TArray<USoundCue*> JumpSounds;
 
 	/** The list of sounds to randomly choose from when landing */
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	TArray<USoundCue*> LandSounds;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	float WalkVolume = 0.2f;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Sounds")
 	float SprintVolume = 0.5f;
 };
