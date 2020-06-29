@@ -18,7 +18,7 @@ More info in this blog post: https://www.projectborealis.com/movement.
 
 ## Binaries
 
-Binaries are compiled for `4.22`, and will work on Blueprint and C++ projects.
+Binaries are compiled for `4.25`, and will work on Blueprint and C++ projects.
 If you are using a different version of Unreal Engine 4, you will need to recompile the plugin.
 
 ## Redistribution note
