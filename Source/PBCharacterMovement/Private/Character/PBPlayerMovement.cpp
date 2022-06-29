@@ -1264,6 +1264,11 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 		return;
 	}
 
+	if (!bInCrouch && bClientSimulation)
+	{
+		return;
+	}
+
 	// See if collision is already at desired size.
 	UCapsuleComponent* CharacterCapsule = CharacterOwner->GetCapsuleComponent();
 	if (FMath::IsNearlyEqual(CharacterCapsule->GetUnscaledCapsuleHalfHeight(),GetCrouchedHalfHeight()))
@@ -1293,6 +1298,9 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 	const float OldUnscaledRadius = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
 	const float FullCrouchDiff = OldUnscaledHalfHeight - GetCrouchedHalfHeight();
 	float CurrentUnscaledHalfHeight = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+
+ CharacterOwner->GetCapsuleComponent()->SetCapsuleSize(OldUnscaledRadius, FullCrouchDiff);
+
 	// Determine the crouching progress
 	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
 	float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - GetCrouchedHalfHeight()) / FullCrouchDiff;
@@ -1314,6 +1322,7 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 	// Determine the target height for this tick
 	float TargetCrouchedHalfHeight = OldUnscaledHalfHeight - FullCrouchDiff * TargetAlpha;
 	// Height is not allowed to be smaller than radius.
+
 	float ClampedCrouchedHalfHeight = FMath::Max3(0.0f, OldUnscaledRadius, TargetCrouchedHalfHeight);
 	CharacterCapsule->SetCapsuleSize(OldUnscaledRadius, ClampedCrouchedHalfHeight);
 	float HalfHeightAdjust = FullCrouchDiff * TargetAlphaDiff;
