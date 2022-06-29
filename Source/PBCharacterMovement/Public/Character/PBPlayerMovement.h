@@ -79,8 +79,9 @@ protected:
 	/** If the player has already landed for a frame, and breaking may be applied. */
 	bool bBrakingFrameTolerated;
 
-	/** If in the crouching transition */
+	/** If in the crouching and sprint transition */
 	bool bInCrouch;
+	bool bIsSprinting;
 
 	/** The PB player character */
 	class APBPlayerCharacter* PBCharacter;

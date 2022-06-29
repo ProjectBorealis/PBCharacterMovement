@@ -75,8 +75,19 @@ void APBPlayerCharacter::OnRep_IsSprinting()
 {
 	UPBPlayerMovement* MovementComponent = Cast<UPBPlayerMovement>(GetCharacterMovement());
 	{
+
 		MovementComponent->bNetworkUpdateReceived = true;
 	}
+}
+
+void APBPlayerCharacter::StopSprinting()
+{
+	bIsSprinting = false;
+}
+
+void APBPlayerCharacter::Sprint()
+{
+	bIsSprinting = true;
 }
 
 void APBPlayerCharacter::ClearJumpInput(float DeltaTime)
