@@ -17,7 +17,8 @@ static TAutoConsoleVariable<int32> CVarBunnyhop(TEXT("move.Bunnyhopping"), 0, TE
 
 // Sets default values
 APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPBPlayerMovement>(ACharacter::CharacterMovementComponentName).SetDefaultSubobjectClass<USkeletalMeshComponent>(ACharacter::MeshComponentName))
+/* Override the movement class from the base class to our own to support multiple speeds (eg. sprinting) */
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPBPlayerMovement>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
