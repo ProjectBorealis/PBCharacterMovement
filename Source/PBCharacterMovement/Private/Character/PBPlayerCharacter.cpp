@@ -1,27 +1,33 @@
 // Copyright 2017-2019 Project Borealis
 
 #include "Character/PBPlayerCharacter.h"
-
 #include "Components/CapsuleComponent.h"
 #include "HAL/IConsoleManager.h"
-
 #include "Character/PBPlayerMovement.h"
+#include "Net/UnrealNetwork.h"
+#include "DrawDebugHelpers.h"
+#include "Camera/CameraComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Animation/AnimInstance.h"
+#include "Kismet/GameplayStatics.h"
 
-static TAutoConsoleVariable<int32> CVarAutoBHop(TEXT("move.Pogo"), 1, TEXT("If holding spacebar should make the player jump whenever possible.\n"), ECVF_Default);
+static TAutoConsoleVariable<int32> CVarAutoBHop(TEXT("move.Pogo"), 0, TEXT("If holding spacebar should make the player jump whenever possible.\n"), ECVF_Default);
 
 static TAutoConsoleVariable<int32> CVarBunnyhop(TEXT("move.Bunnyhopping"), 0, TEXT("Enable normal bunnyhopping.\n"), ECVF_Default);
 
 // Sets default values
 APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPBPlayerMovement>(ACharacter::CharacterMovementComponentName))
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPBPlayerMovement>(ACharacter::CharacterMovementComponentName).SetDefaultSubobjectClass<USkeletalMeshComponent>(ACharacter::MeshComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(30.48f, 68.58f);
-	// Set collision settings. We are the invisible player with no 3rd person mesh.
-	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
-	GetCapsuleComponent()->bReturnMaterialOnMove = true;
+	GetMesh()->bReceivesDecals = false;
+	GetMesh()->SetCollisionObjectType(ECC_Pawn);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetCollisionObjectType(ECC_PhysicsBody);  // Can't be of type 'pawn' or capsule
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetCapsuleComponent()->InitCapsuleSize(34.f, 72.f);
 
 	// set our turn rates for input
 	BaseTurnRate = 45.0f;
@@ -32,6 +38,10 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	// get pointer to movement component
 	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
+
+	/*Net Settings*/
+//NetUpdateFrequency = 128.0f;
+//MinNetUpdateFrequency = 32.0f;
 }
 
 void APBPlayerCharacter::BeginPlay()
@@ -40,6 +50,32 @@ void APBPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	// Max jump time to get to the top of the arc
 	MaxJumpTime = -4.0f * GetCharacterMovement()->JumpZVelocity / (3.0f * GetCharacterMovement()->GetGravityZ());
+}
+
+void APBPlayerCharacter::OnRep_IsCrouched()
+{
+	UPBPlayerMovement* MovementComponent = Cast<UPBPlayerMovement>(GetCharacterMovement());
+	if (MovementComponent)
+	{
+		if (bIsCrouched)
+		{
+			MovementComponent->bWantsToCrouch = true;
+		}
+		else
+		{
+			MovementComponent->bWantsToCrouch = false;
+		}
+		MovementComponent->bNetworkUpdateReceived = true;
+	}
+}
+
+
+void APBPlayerCharacter::OnRep_IsSprinting()
+{
+	UPBPlayerMovement* MovementComponent = Cast<UPBPlayerMovement>(GetCharacterMovement());
+	{
+		MovementComponent->bNetworkUpdateReceived = true;
+	}
 }
 
 void APBPlayerCharacter::ClearJumpInput(float DeltaTime)

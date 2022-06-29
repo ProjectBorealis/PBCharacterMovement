@@ -3,19 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "GameFramework/Character.h"
-
 #include "PBPlayerCharacter.generated.h"
 
 class USoundCue;
 class UPBMoveStepSound;
 class UPBPlayerMovement;
+class UCameraComponent;
+class UCapsuleComponent;
 
 UCLASS(config = Game)
 class PBCHARACTERMOVEMENT_API APBPlayerCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+public:
+	/*The default Eye height of the player, saved so we can set it when standing up after crouching*/
+	float DefaultEyeHeight;
+
+	/** Handle Crouching replicated from server */
+	virtual void OnRep_IsCrouched() override;
+
+	/** Handle sprinting replicated from server */
+	UFUNCTION()
+		virtual void OnRep_IsSprinting();
 
 public:
 	virtual void ClearJumpInput(float DeltaTime) override;
@@ -74,8 +85,13 @@ private:
 
 	virtual void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
 
+	void OnRep_IsCrouchRunning();
+
+
 protected:
-	virtual void BeginPlay();
+	/* Called when the game starts or when spawned*/
+	virtual void BeginPlay() override;
+
 
 public:
 	APBPlayerCharacter(const FObjectInitializer& ObjectInitializer);
