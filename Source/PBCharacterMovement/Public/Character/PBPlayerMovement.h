@@ -83,6 +83,10 @@ protected:
 	bool bInCrouch;
 	bool bIsSprinting;
 
+	/** floor check removed */
+	bool UseFlatBaseForFloorChecks = false;
+
+
 	/** The PB player character */
 	class APBPlayerCharacter* PBCharacter;
 
@@ -166,6 +170,11 @@ public:
 	bool IsInCrouch() const
 	{
 		return bInCrouch;
+	}
+
+	bool IsSprinting() const
+	{
+		return bIsSprinting;
 	}
 
 	virtual float GetMaxSpeed() const override;

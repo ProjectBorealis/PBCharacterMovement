@@ -1288,11 +1288,11 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 	}
 
 	// Change collision size to crouching dimensions
-	const auto ComponentScale = CharacterCapsule->GetShapeScale();
-	const auto OldUnscaledHalfHeight = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float OldUnscaledRadius = CharacterCapsule->GetUnscaledCapsuleRadius();
+	const auto ComponentScale = CharacterOwner->GetCapsuleComponent()->GetShapeScale();
+	const auto OldUnscaledHalfHeight = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
 	const float FullCrouchDiff = OldUnscaledHalfHeight - GetCrouchedHalfHeight();
-	float CurrentUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
+	float CurrentUnscaledHalfHeight = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	// Determine the crouching progress
 	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
 	float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - GetCrouchedHalfHeight()) / FullCrouchDiff;
