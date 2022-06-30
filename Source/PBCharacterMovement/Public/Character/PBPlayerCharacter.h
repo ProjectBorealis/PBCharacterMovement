@@ -18,21 +18,16 @@ class PBCHARACTERMOVEMENT_API APBPlayerCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	/*The default Eye height of the player, saved so we can set it when standing up after crouching*/
-	float DefaultEyeHeight;
 
-	/** Handle Crouching replicated from server */
-	virtual void OnRep_IsCrouched() override;
-
-	/** Handle sprinting replicated from server */
 	UFUNCTION()
-		virtual void OnRep_IsSprinting();
+    virtual void OnRep_IsSprinting();
+	/** Handle sprinting from client */
 	UFUNCTION(BlueprintCallable, Category = Character)
-		virtual void StopSprinting();
+    virtual void StopSprinting();
 	UFUNCTION(BlueprintCallable, Category = Character)
-		virtual void Sprint();
+	virtual void Sprint();
 
-public:
+	virtual void PreInitializeComponents() override;
 	virtual void ClearJumpInput(float DeltaTime) override;
 	virtual void StopJumping() override;
 	virtual void OnJumped_Implementation() override;

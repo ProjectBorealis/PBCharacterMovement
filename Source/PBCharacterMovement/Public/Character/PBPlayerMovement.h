@@ -3,18 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
-
 #include "PBPlayerMovement.generated.h"
 
 #define LADDER_MOUNT_TIMEOUT 0.2f
-
-// Crouch Timings (in seconds)
-#define MOVEMENT_DEFAULT_CROUCHTIME 0.4f
-#define MOVEMENT_DEFAULT_CROUCHJUMPTIME 0.0f
-#define MOVEMENT_DEFAULT_UNCROUCHTIME 0.2f
-#define MOVEMENT_DEFAULT_UNCROUCHJUMPTIME 0.8f
 
 // Testing mid-air stepping code
 #ifndef MID_AIR_STEP
@@ -56,22 +48,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
 	float AirSpeedCap;
 
-	/** Time to crouch on ground in seconds */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float CrouchTime;
-
-	/** Time to uncrouch on ground in seconds */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float UncrouchTime;
-
-	/** Time to crouch in air in seconds */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float CrouchJumpTime;
-
-	/** Time to uncrouch in air in seconds */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float UncrouchJumpTime;
-
 	/** the minimum step height from moving fast */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite)
 	float MinStepHeight;
@@ -80,7 +56,6 @@ protected:
 	bool bBrakingFrameTolerated;
 
 	/** If in the crouching and sprint transition */
-	bool bInCrouch;
 	bool bIsSprinting;
 
 	/** floor check removed */
@@ -128,12 +103,6 @@ public:
 	virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
 
-	// Overrides for crouch transitions
-	virtual void Crouch(bool bClientSimulation = false) override;
-	virtual void UnCrouch(bool bClientSimulation = false) override;
-	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
-	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
-
 	// Noclip overrides
 	virtual bool DoJump(bool bClientSimulation) override;
 
@@ -166,18 +135,6 @@ public:
 	{
 		return bBrakingFrameTolerated;
 	}
-
-	bool IsInCrouch() const
-	{
-		return bInCrouch;
-	}
-
-	bool IsSprinting() const
-	{
-		return bIsSprinting;
-	}
-
-	virtual float GetMaxSpeed() const override;
 
 private:
 	/** Plays sound effect according to movement and surface */

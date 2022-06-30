@@ -1,7 +1,6 @@
 // Copyright 2017-2019 Project Borealis
 
 #include "Character/PBPlayerMovement.h"
-
 #include "Components/CapsuleComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -10,10 +9,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Sound/SoundCue.h"
-
 #include "Sound/PBMoveStepSound.h"
 #include "Character/PBPlayerCharacter.h"
-
 static TAutoConsoleVariable<int32> CVarShowPos(TEXT("cl.ShowPos"), 0, TEXT("Show position and movement information.\n"), ECVF_Default);
 
 DECLARE_CYCLE_STAT(TEXT("Char StepUp"), STAT_CharStepUp, STATGROUP_Character);
@@ -25,6 +22,8 @@ const float VERTICAL_SLOPE_NORMAL_Z = 0.001f; // Slope is vertical if Abs(Normal
 											  // normals slightly off horizontal for vertical surface.
 
 // Purpose: override default player movement
+
+
 UPBPlayerMovement::UPBPlayerMovement()
 {
 	// We have our own air movement handling, so we can allow for full air
@@ -75,14 +74,6 @@ UPBPlayerMovement::UPBPlayerMovement()
 	SpeedMultMax = SprintSpeed * 2.5f;
 	// Start out braking
 	bBrakingFrameTolerated = true;
-	// Crouching
-	SetCrouchedHalfHeight(34.29f);
-	MaxWalkSpeedCrouched = 120.65f;
-	bCanWalkOffLedgesWhenCrouching = true;
-	CrouchTime = MOVEMENT_DEFAULT_CROUCHTIME;
-	UncrouchTime = MOVEMENT_DEFAULT_UNCROUCHTIME;
-	CrouchJumpTime = MOVEMENT_DEFAULT_CROUCHJUMPTIME;
-	UncrouchJumpTime = MOVEMENT_DEFAULT_UNCROUCHJUMPTIME;
 	// Noclip
 	NoClipVerticalMoveMode = 0;
 	// Slope angle is 45.57 degrees
@@ -113,9 +104,10 @@ UPBPlayerMovement::UPBPlayerMovement()
 	// Flat base
 	bUseFlatBaseForFloorChecks = true;
 	// Agent props
-	NavAgentProps.bCanCrouch = true;
 	NavAgentProps.bCanFly = true;
 	PBCharacter = Cast<APBPlayerCharacter>(GetOwner());
+	//Crouching
+
 }
 
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -131,7 +123,7 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	{
 		BrakingFrictionFactor = 1.0f;
 	}
-	
+
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// Skip player movement when we're simulating physics (ie ragdoll)
@@ -143,43 +135,15 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	if ((bShowPos || CVarShowPos->GetInt() != 0) && CharacterOwner)
 	{
 		GEngine->AddOnScreenDebugMessage(1, 1.0f, FColor::Green,
-										 FString::Printf(TEXT("pos: %f %f %f"), CharacterOwner->GetActorLocation().X, CharacterOwner->GetActorLocation().Y,
-														 CharacterOwner->GetActorLocation().Z));
+			FString::Printf(TEXT("pos: %f %f %f"), CharacterOwner->GetActorLocation().X, CharacterOwner->GetActorLocation().Y,
+				CharacterOwner->GetActorLocation().Z));
 		GEngine->AddOnScreenDebugMessage(2, 1.0f, FColor::Green,
-										 FString::Printf(TEXT("ang: %f %f %f"), CharacterOwner->GetControlRotation().Yaw,
-														 CharacterOwner->GetControlRotation().Pitch, CharacterOwner->GetControlRotation().Roll));
+			FString::Printf(TEXT("ang: %f %f %f"), CharacterOwner->GetControlRotation().Yaw,
+				CharacterOwner->GetControlRotation().Pitch, CharacterOwner->GetControlRotation().Roll));
 		GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("vel: %f"), FMath::Sqrt(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y)));
 	}
 
-	// Crouch transition but not in noclip or on a ladder
-	if (bInCrouch && !bCheatFlying && !bOnLadder)
-	{
-		// Crouch
-		if (!bWantsToCrouch)
-		{
-			if (IsWalking())
-			{
-				// Normal uncrouch
-				DoUnCrouchResize(UncrouchTime, DeltaTime);
-			}
-			else
-			{
-				// Uncrouch jump
-				DoUnCrouchResize(UncrouchJumpTime, DeltaTime);
-			}
-		}
-		else
-		{
-			if (IsWalking())
-			{
-				DoCrouchResize(CrouchTime, DeltaTime);
-			}
-			else
-			{
-				DoCrouchResize(CrouchJumpTime, DeltaTime);
-			}
-		}
-	}
+
 
 	bBrakingFrameTolerated = IsMovingOnGround();
 }
@@ -445,7 +409,7 @@ void UPBPlayerMovement::PhysFalling(float deltaTime, int32 Iterations)
 
 						// bDitch=true means that pawn is straddling two slopes, neither of which he can stand on
 						bool bDitch = ((OldHitImpactNormal.Z > 0.f) && (Hit.ImpactNormal.Z > 0.f) && (FMath::Abs(Delta.Z) <= KINDA_SMALL_NUMBER) &&
-									   ((Hit.ImpactNormal | OldHitImpactNormal) < 0.f));
+							((Hit.ImpactNormal | OldHitImpactNormal) < 0.f));
 						SafeMoveUpdatedComponent(Delta, PawnRotation, true, Hit);
 						if (Hit.Time == 0.f)
 						{
@@ -503,11 +467,11 @@ bool UPBPlayerMovement::CanStepUp(const FHitResult& Hit) const
 	{
 		FHitResult HitResult = FHitResult(ForceInit);
 		FVector Start = GetCharacterOwner()->GetCapsuleComponent()->GetComponentLocation() -
-						FVector(0.0f, 0.0f, GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+			FVector(0.0f, 0.0f, GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		float FloorSweepTraceDist = MaxStepHeight / 2.0f + MAX_FLOOR_DIST + KINDA_SMALL_NUMBER;
 		FVector End = Start - FVector(0.0f, 0.0f, FloorSweepTraceDist);
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_WorldStatic,
-											 FCollisionQueryParams(FName(TEXT("FallingStepTrace")), true, GetCharacterOwner()));
+			FCollisionQueryParams(FName(TEXT("FallingStepTrace")), true, GetCharacterOwner()));
 		if (!HitResult.bBlockingHit)
 		{
 			return false;
@@ -812,7 +776,7 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 	// Reset step side if we are changing modes
 	StepSide = false;
-	
+
 	FHitResult Hit;
 	// did we jump or land
 	bool bJumped = false;
@@ -825,11 +789,11 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 		TraceParams.bReturnPhysicalMaterial = true;
 
 		GetWorld()->SweepSingleByChannel(Hit, CharacterOwner->GetCapsuleComponent()->GetComponentLocation(),
-									  CharacterOwner->GetCapsuleComponent()->GetComponentLocation() - FVector(0.0f, 0.0f, CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f),
-									  FQuat::Identity, ECC_Visibility,
-									  FCollisionShape::MakeBox(FVector(CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(), CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(),
-																	   CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 1.5f)),
-									  TraceParams);
+			CharacterOwner->GetCapsuleComponent()->GetComponentLocation() - FVector(0.0f, 0.0f, CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f),
+			FQuat::Identity, ECC_Visibility,
+			FCollisionShape::MakeBox(FVector(CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(), CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius(),
+				CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 1.5f)),
+			TraceParams);
 		bJumped = true;
 	}
 	if (PreviousMovementMode == EMovementMode::MOVE_Falling && MovementMode == EMovementMode::MOVE_Walking)
@@ -859,11 +823,6 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	if (MoveSound)
 	{
 		float MoveSoundVolume = MoveSound->GetWalkVolume();
-
-		if (IsCrouching())
-		{
-			MoveSoundVolume *= 0.65f;
-		}
 
 		TArray<USoundCue*> MoveSoundCues = bJumped ? MoveSound->GetJumpSounds() : MoveSound->GetLandSounds();
 
@@ -953,98 +912,6 @@ void UPBPlayerMovement::PlayMoveSound(float DeltaTime)
 	{
 		return;
 	}
-
-	float Speed = Velocity.SizeSquared();
-	float RunSpeedThreshold;
-	float SprintSpeedThreshold;
-
-	if (IsCrouching() || bOnLadder)
-	{
-		RunSpeedThreshold = MaxWalkSpeedCrouched;
-		SprintSpeedThreshold = MaxWalkSpeedCrouched * 1.7f;
-	}
-	else
-	{
-		RunSpeedThreshold = MaxWalkSpeed;
-		SprintSpeedThreshold = SprintSpeed;
-	}
-
-	// Only play sounds if we are moving fast enough on the ground or on a
-	// ladder
-	bool bPlaySound = (bBrakingFrameTolerated || bOnLadder) && Speed >= RunSpeedThreshold * RunSpeedThreshold;
-
-	if (!bPlaySound)
-	{
-		return;
-	}
-
-	bool bSprinting = Speed >= SprintSpeedThreshold * SprintSpeedThreshold;
-
-	float MoveSoundVolume = 1.0f;
-
-	UPBMoveStepSound* MoveSound = nullptr;
-
-	if (bOnLadder)
-	{
-		MoveSoundVolume = 0.5f;
-		MoveSoundTime = 450.0f;
-		if (!PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(EPhysicalSurface::SurfaceType1)))
-		{
-			return;
-		}
-		MoveSound = PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(EPhysicalSurface::SurfaceType1))->GetDefaultObject();
-	}
-	else
-	{
-		MoveSoundTime = bSprinting ? 300.0f : 400.0f;
-		FHitResult Hit = CurrentFloor.HitResult;
-		TSubclassOf<UPBMoveStepSound>* GotSound = nullptr;
-		if (Hit.PhysMaterial.IsValid())
-		{
-			GotSound = PBCharacter->GetMoveStepSound(Hit.PhysMaterial->SurfaceType);
-		}
-		if (GotSound)
-		{
-			MoveSound = GotSound->GetDefaultObject();
-		}
-		if (!MoveSound)
-		{
-			if (!PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(EPhysicalSurface::SurfaceType_Default)))
-			{
-				return;
-			}
-			MoveSound = PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(EPhysicalSurface::SurfaceType_Default))->GetDefaultObject();
-		}
-
-		MoveSoundVolume = bSprinting ? MoveSound->GetSprintVolume() : MoveSound->GetWalkVolume();
-
-		if (IsCrouching())
-		{
-			MoveSoundVolume *= 0.65f;
-			MoveSoundTime += 100.0f;
-		}
-	}
-
-	if (MoveSound)
-	{
-		TArray<USoundCue*> MoveSoundCues = StepSide ? MoveSound->GetStepLeftSounds() : MoveSound->GetStepRightSounds();
-
-		if (MoveSoundCues.Num() < 1)
-		{
-			return;
-		}
-
-		USoundCue* Sound = MoveSoundCues[FMath::RandRange(0, MoveSoundCues.Num() - 1)];
-
-		Sound->VolumeMultiplier = MoveSoundVolume;
-
-		/*UPBGameplayStatics::PlaySound(Sound, GetCharacterOwner(),
-									  // FVector(0.0f, 0.0f, -GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()),
-									  EPBSoundCategory::Footstep);*/
-		UGameplayStatics::SpawnSoundAttached(Sound, GetCharacterOwner()->GetRootComponent());
-	}
-
-	StepSide = !StepSide;
 }
 
 #if WIP_SURFING
@@ -1060,11 +927,11 @@ void UPBPlayerMovement::PreemptCollision(float DeltaTime, float SurfaceFriction)
 	{
 		FHitResult HitResult;
 		FVector Start = GetCharacterOwner()->GetCapsuleComponent()->GetComponentLocation() -
-						FVector(0.0f, 0.0f, GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+			FVector(0.0f, 0.0f, GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 		float FloorSweepTraceDist = MaxStepHeight + MAX_FLOOR_DIST + KINDA_SMALL_NUMBER;
 		FVector End = Start - FVector(0.0f, 0.0f, FloorSweepTraceDist);
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, UpdatedComponent->GetCollisionObjectType(),
-											 FCollisionQueryParams(FName(TEXT("SurfTrace")), true, GetCharacterOwner()));
+			FCollisionQueryParams(FName(TEXT("SurfTrace")), true, GetCharacterOwner()));
 		if (HitResult.bBlockingHit && HitResult.ImpactNormal.Z < GetWalkableFloorZ())
 		{
 			FVector MovementVector(Velocity.X, Velocity.Y, Velocity.Z);
@@ -1218,355 +1085,11 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 
 		float SpeedSq = Velocity.SizeSquared2D();
 
-		// Dynamic step height code for allowing sliding on a slope when at a high speed
-		if (SpeedSq <= MaxWalkSpeedCrouched * MaxWalkSpeedCrouched)
-		{
-			// If we're crouching or not sliding, just use max
-			MaxStepHeight = GetClass()->GetDefaultObject<UPBPlayerMovement>()->MaxStepHeight;
-			SetWalkableFloorZ(GetClass()->GetDefaultObject<UPBPlayerMovement>()->GetWalkableFloorZ());
-		}
-		else
-		{
-			// Scale step/ramp height down the faster we go
-			float Speed = FMath::Sqrt(SpeedSq);
-			float SpeedScale = (Speed - SpeedMultMin) / (SpeedMultMax - SpeedMultMin);
-			// float SpeedMultiplier = UPBUtil::Clamp01(SpeedScale);
-			float SpeedMultiplier = FMath::Clamp(SpeedScale, 0.0f, 1.0f);
-			SpeedMultiplier *= SpeedMultiplier;
-			if (!IsFalling())
-			{
-				// If we're on ground, factor in friction.
-				SpeedMultiplier = FMath::Max((1.0f - SurfaceFriction) * SpeedMultiplier, 0.0f);
-			}
-			MaxStepHeight = FMath::Clamp(GetClass()->GetDefaultObject<UPBPlayerMovement>()->MaxStepHeight * (1.0f - SpeedMultiplier), MinStepHeight,
-										 GetClass()->GetDefaultObject<UPBPlayerMovement>()->MaxStepHeight);
-			SetWalkableFloorZ(FMath::Clamp(GetClass()->GetDefaultObject<UPBPlayerMovement>()->GetWalkableFloorZ() - (0.5f * (0.4f - SpeedMultiplier)),
-										   GetClass()->GetDefaultObject<UPBPlayerMovement>()->GetWalkableFloorZ(), 0.9848f));
-		}
+
 	}
 
 	if (bUseRVOAvoidance)
 	{
 		CalcAvoidanceVelocity(DeltaTime);
 	}
-}
-
-void UPBPlayerMovement::Crouch(bool bClientSimulation)
-{
-	bInCrouch = true;
-}
-
-void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation)
-{
-	if (!HasValidData() || (!bClientSimulation && !CanCrouchInCurrentState()))
-	{
-		bInCrouch = false;
-		return;
-	}
-
-	if (!bInCrouch && bClientSimulation)
-	{
-		return;
-	}
-
-	// See if collision is already at desired size.
-	UCapsuleComponent* CharacterCapsule = CharacterOwner->GetCapsuleComponent();
-	if (FMath::IsNearlyEqual(CharacterCapsule->GetUnscaledCapsuleHalfHeight(),GetCrouchedHalfHeight()))
-	{
-		if (!bClientSimulation)
-		{
-			CharacterOwner->bIsCrouched = true;
-		}
-		CharacterOwner->OnStartCrouch(0.0f, 0.0f);
-		bInCrouch = false;
-		return;
-	}
-
-	auto DefaultCharacter = CharacterOwner->GetClass()->GetDefaultObject<ACharacter>();
-
-	if (bClientSimulation && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy)
-	{
-		// restore collision size before crouching
-		CharacterCapsule->SetCapsuleSize(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleRadius(),
-										 DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
-		bShrinkProxyCapsule = true;
-	}
-
-	// Change collision size to crouching dimensions
-	const auto ComponentScale = CharacterOwner->GetCapsuleComponent()->GetShapeScale();
-	const auto OldUnscaledHalfHeight = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	const float OldUnscaledRadius = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleRadius();
-	const float FullCrouchDiff = OldUnscaledHalfHeight - GetCrouchedHalfHeight();
-	float CurrentUnscaledHalfHeight = CharacterOwner->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-
- CharacterOwner->GetCapsuleComponent()->SetCapsuleSize(OldUnscaledRadius, FullCrouchDiff);
-
-	// Determine the crouching progress
-	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
-	float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - GetCrouchedHalfHeight()) / FullCrouchDiff;
-	// Determine how much we are progressing this tick
-	float TargetAlphaDiff = 1.0f;
-	float TargetAlpha = 1.0f;
-	if (!InstantCrouch)
-	{
-		TargetAlphaDiff = DeltaTime / CrouchTime;
-		TargetAlpha = CurrentAlpha + TargetAlphaDiff;
-	}
-	if (TargetAlpha >= 1.0f || FMath::IsNearlyEqual(TargetAlpha, 1.0f))
-	{
-		TargetAlpha = 1.0f;
-		TargetAlphaDiff = TargetAlpha - CurrentAlpha;
-		bInCrouch = false;
-		CharacterOwner->bIsCrouched = true;
-	}
-	// Determine the target height for this tick
-	float TargetCrouchedHalfHeight = OldUnscaledHalfHeight - FullCrouchDiff * TargetAlpha;
-	// Height is not allowed to be smaller than radius.
-
-	float ClampedCrouchedHalfHeight = FMath::Max3(0.0f, OldUnscaledRadius, TargetCrouchedHalfHeight);
-	CharacterCapsule->SetCapsuleSize(OldUnscaledRadius, ClampedCrouchedHalfHeight);
-	float HalfHeightAdjust = FullCrouchDiff * TargetAlphaDiff;
-	float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
-
-	if (!bClientSimulation)
-	{
-		if (bCrouchMaintainsBaseLocation)
-		{
-			// Intentionally not using MoveUpdatedComponent, where a horizontal
-			// plane constraint would prevent the base of the capsule from
-			// staying at the same spot.
-			UpdatedComponent->MoveComponent(FVector(0.0f, 0.0f, -ScaledHalfHeightAdjust), UpdatedComponent->GetComponentQuat(), true, nullptr,
-											EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
-		}
-	}
-
-	bForceNextFloorCheck = true;
-
-	AdjustProxyCapsuleSize();
-	CharacterOwner->OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
-
-	// Don't smooth this change in mesh position
-	if (bClientSimulation && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy)
-	{
-		FNetworkPredictionData_Client_Character* ClientData = GetPredictionData_Client_Character();
-		if (ClientData && !FMath::IsNearlyZero(ClientData->MeshTranslationOffset.Z))
-		{
-			ClientData->MeshTranslationOffset -= FVector(0.0f, 0.0f, ScaledHalfHeightAdjust);
-			ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
-		}
-	}
-}
-
-void UPBPlayerMovement::UnCrouch(bool bClientSimulation)
-{
-	bInCrouch = true;
-}
-
-void UPBPlayerMovement::DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation)
-{
-	if (!HasValidData())
-	{
-		bInCrouch = false;
-		return;
-	}
-
-	ACharacter* DefaultCharacter = CharacterOwner->GetClass()->GetDefaultObject<ACharacter>();
-
-	UCapsuleComponent* CharacterCapsule = CharacterOwner->GetCapsuleComponent();
-
-	// See if collision is already at desired size.
-	if (FMath::IsNearlyEqual(CharacterCapsule->GetUnscaledCapsuleHalfHeight(), DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()))
-	{
-		if (!bClientSimulation)
-		{
-			CharacterOwner->bIsCrouched = false;
-		}
-		CharacterOwner->OnEndCrouch(0.0f, 0.0f);
-		bInCrouch = false;
-		return;
-	}
-
-	const float CurrentCrouchedHalfHeight = CharacterCapsule->GetScaledCapsuleHalfHeight();
-
-	const float ComponentScale = CharacterCapsule->GetShapeScale();
-	const float OldUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
-	const float UncrouchedHeight = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float FullCrouchDiff = UncrouchedHeight - GetCrouchedHalfHeight();
-	// Determine the crouching progress
-	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
-	float CurrentAlpha = 1.0f - (UncrouchedHeight - OldUnscaledHalfHeight) / FullCrouchDiff;
-	float TargetAlphaDiff = 1.0f;
-	float TargetAlpha = 1.0f;
-	if (!InstantCrouch)
-	{
-		TargetAlphaDiff = DeltaTime / TargetTime;
-		TargetAlpha = CurrentAlpha + TargetAlphaDiff;
-	}
-	if (TargetAlpha >= 1.0f || FMath::IsNearlyEqual(TargetAlpha, 1.0f))
-	{
-		TargetAlpha = 1.0f;
-		TargetAlphaDiff = TargetAlpha - CurrentAlpha;
-		bInCrouch = false;
-	}
-	const float HalfHeightAdjust = FullCrouchDiff * TargetAlphaDiff;
-	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
-	const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
-
-	// Grow to uncrouched size.
-	check(CharacterCapsule);
-
-	if (!bClientSimulation)
-	{
-		// Try to stay in place and see if the larger capsule fits. We use a
-		// slightly taller capsule to avoid penetration.
-		const UWorld* MyWorld = GetWorld();
-		const float SweepInflation = KINDA_SMALL_NUMBER * 10.0f;
-		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CrouchTrace), false, CharacterOwner);
-		FCollisionResponseParams ResponseParam;
-		InitCollisionParams(CapsuleParams, ResponseParam);
-
-		// Compensate for the difference between current capsule size and
-		// standing size
-		const FCollisionShape StandingCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -SweepInflation - ScaledHalfHeightAdjust); // Shrink by
-																																				  // negative amount,
-																																				  // so actually grow it.
-		const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
-		bool bEncroached = true;
-
-		if (!bCrouchMaintainsBaseLocation)
-		{
-			// Expand in place
-			bEncroached = MyWorld->OverlapBlockingTestByChannel(PawnLocation, FQuat::Identity, CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
-
-			if (bEncroached)
-			{
-				// Try adjusting capsule position to see if we can avoid
-				// encroachment.
-				if (ScaledHalfHeightAdjust > 0.0f)
-				{
-					// Shrink to a short capsule, sweep down to base to find
-					// where that would hit something, and then try to stand up
-					// from there.
-					float PawnRadius, PawnHalfHeight;
-					CharacterCapsule->GetScaledCapsuleSize(PawnRadius, PawnHalfHeight);
-					const float ShrinkHalfHeight = PawnHalfHeight - PawnRadius;
-					const float TraceDist = PawnHalfHeight - ShrinkHalfHeight;
-					const FVector Down = FVector(0.0f, 0.0f, -TraceDist);
-
-					FHitResult Hit(1.0f);
-					const FCollisionShape ShortCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, ShrinkHalfHeight);
-					const bool bBlockingHit = MyWorld->SweepSingleByChannel(Hit, PawnLocation, PawnLocation + Down, FQuat::Identity, CollisionChannel,
-																			ShortCapsuleShape, CapsuleParams);
-					if (Hit.bStartPenetrating)
-					{
-						bEncroached = true;
-					}
-					else
-					{
-						// Compute where the base of the sweep ended up, and see
-						// if we can stand there
-						const float DistanceToBase = (Hit.Time * TraceDist) + ShortCapsuleShape.Capsule.HalfHeight;
-						const FVector NewLoc = FVector(PawnLocation.X, PawnLocation.Y,
-													   PawnLocation.Z - DistanceToBase + StandingCapsuleShape.Capsule.HalfHeight + SweepInflation + MIN_FLOOR_DIST / 2.0f);
-						bEncroached = MyWorld->OverlapBlockingTestByChannel(NewLoc, FQuat::Identity, CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
-						if (!bEncroached)
-						{
-							// Intentionally not using MoveUpdatedComponent,
-							// where a horizontal plane constraint would prevent
-							// the base of the capsule from staying at the same
-							// spot.
-							UpdatedComponent->MoveComponent(NewLoc - PawnLocation, UpdatedComponent->GetComponentQuat(), false, nullptr,
-															EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			// Expand while keeping base location the same.
-			FVector StandingLocation = PawnLocation + FVector(0.0f, 0.0f, StandingCapsuleShape.GetCapsuleHalfHeight() - CurrentCrouchedHalfHeight);
-			bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, FQuat::Identity, CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
-
-			if (bEncroached)
-			{
-				if (IsMovingOnGround())
-				{
-					// Something might be just barely overhead, try moving down
-					// closer to the floor to avoid it.
-					const float MinFloorDist = KINDA_SMALL_NUMBER * 10.0f;
-					if (CurrentFloor.bBlockingHit && CurrentFloor.FloorDist > MinFloorDist)
-					{
-						StandingLocation.Z -= CurrentFloor.FloorDist - MinFloorDist;
-						bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, FQuat::Identity, CollisionChannel, StandingCapsuleShape,
-																			CapsuleParams, ResponseParam);
-					}
-				}
-			}
-
-			if (!bEncroached)
-			{
-				// Commit the change in location.
-				UpdatedComponent->MoveComponent(StandingLocation - PawnLocation, UpdatedComponent->GetComponentQuat(), false, nullptr,
-												EMoveComponentFlags::MOVECOMP_NoFlags, ETeleportType::TeleportPhysics);
-				bForceNextFloorCheck = true;
-			}
-		}
-
-		// If still encroached then abort.
-		if (bEncroached)
-		{
-			return;
-		}
-
-		CharacterOwner->bIsCrouched = false;
-	}
-	else
-	{
-		bShrinkProxyCapsule = true;
-	}
-
-	// Now call SetCapsuleSize() to cause touch/untouch events and actually grow
-	// the capsule
-	CharacterCapsule->SetCapsuleSize(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleRadius(), OldUnscaledHalfHeight + HalfHeightAdjust, true);
-
-	const float MeshAdjust = ScaledHalfHeightAdjust;
-	AdjustProxyCapsuleSize();
-	CharacterOwner->OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
-
-	// Don't smooth this change in mesh position
-	if (bClientSimulation && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy)
-	{
-		FNetworkPredictionData_Client_Character* ClientData = GetPredictionData_Client_Character();
-		if (ClientData && !FMath::IsNearlyZero(ClientData->MeshTranslationOffset.Z))
-		{
-			ClientData->MeshTranslationOffset += FVector(0.0f, 0.0f, MeshAdjust);
-			ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
-		}
-	}
-}
-
-float UPBPlayerMovement::GetMaxSpeed() const
-{
-	if (IsWalking() || bCheatFlying || IsFalling())
-	{
-		if (PBCharacter->IsSprinting())
-		{
-			if (IsCrouching())
-			{
-				return MaxWalkSpeedCrouched * 1.7f;
-			}
-			return bCheatFlying ? SprintSpeed * 1.5f : SprintSpeed;
-		}
-		if (PBCharacter->DoesWantToWalk())
-		{
-			return WalkSpeed;
-		}
-		if (IsCrouching())
-		{
-			return MaxWalkSpeedCrouched;
-		}
-	}
-
-	return Super::GetMaxSpeed();
 }
