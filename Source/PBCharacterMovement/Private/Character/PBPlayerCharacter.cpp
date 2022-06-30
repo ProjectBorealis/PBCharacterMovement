@@ -11,10 +11,6 @@
 #include "Animation/AnimInstance.h"
 #include "Kismet/GameplayStatics.h"
 
-static FName NAME_PBCharacterCollisionProfile_Capsule(TEXT("PBPawnCapsule"));
-static FName NAME_PBCCharacterCollisionProfile_Mesh(TEXT("PBPawnMesh"));
-
-
 static TAutoConsoleVariable<int32> CVarAutoBHop(TEXT("move.Pogo"), 0, TEXT("If holding spacebar should make the player jump whenever possible.\n"), ECVF_Default);
 
 static TAutoConsoleVariable<int32> CVarBunnyhop(TEXT("move.Bunnyhopping"), 0, TEXT("Enable normal bunnyhopping.\n"), ECVF_Default);
@@ -25,9 +21,6 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UPBPlayerMovement>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = false;
-
-	NetCullDistanceSquared = 900000000.0f;
 
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionObjectType(ECC_Pawn);
@@ -47,32 +40,9 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	// get pointer to movement component
 	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
 
-	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
-	check(CapsuleComp);
-	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
-	CapsuleComp->SetCollisionProfileName(NAME_PBCharacterCollisionProfile_Capsule);
-
-	USkeletalMeshComponent* MeshComp = GetMesh();
-	check(MeshComp);
-	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));  // Rotate mesh to be X forward since it is exported as Y forward.
-	MeshComp->SetCollisionProfileName(NAME_PBCCharacterCollisionProfile_Mesh);
-
-	UPBPlayerMovement* PBMoveComp = CastChecked<UPBPlayerMovement>(GetCharacterMovement());
-	PBMoveComp->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-	PBMoveComp->bAllowPhysicsRotationDuringAnimRootMotion = false;
-	PBMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
-	PBMoveComp->bCanWalkOffLedgesWhenCrouching = true;
-	PBMoveComp->SetCrouchedHalfHeight(65.0f);
-	BaseEyeHeight = 80.0f;
-	CrouchedEyeHeight = 50.0f;
 	/*Net Settings*/
 //NetUpdateFrequency = 128.0f;
 //MinNetUpdateFrequency = 32.0f;
-}
-
-void APBPlayerCharacter::PreInitializeComponents()
-{
-	Super::PreInitializeComponents();
 }
 
 void APBPlayerCharacter::BeginPlay()
@@ -102,6 +72,24 @@ void APBPlayerCharacter::Sprint()
 {
 	bIsSprinting = true;
 }
+
+void APBPlayerCharacter::OnRep_IsCrouched()
+{
+	UPBPlayerMovement* MovementComponent = Cast<UPBPlayerMovement>(GetCharacterMovement());
+	if (MovementComponent)
+	{
+		if (bIsCrouched)
+		{
+			MovementComponent->bWantsToCrouch = true;
+		}
+		else
+		{
+			MovementComponent->bWantsToCrouch = false;
+		}
+		MovementComponent->bNetworkUpdateReceived = true;
+	}
+}
+
 
 void APBPlayerCharacter::ClearJumpInput(float DeltaTime)
 {

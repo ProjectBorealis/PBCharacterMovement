@@ -26,8 +26,9 @@ public:
     virtual void StopSprinting();
 	UFUNCTION(BlueprintCallable, Category = Character)
 	virtual void Sprint();
+	/** Handle Crouching replicated from server */
+	virtual void OnRep_IsCrouched() override;
 
-	virtual void PreInitializeComponents() override;
 	virtual void ClearJumpInput(float DeltaTime) override;
 	virtual void StopJumping() override;
 	virtual void OnJumped_Implementation() override;
@@ -74,6 +75,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Sounds")
 	TMap<TEnumAsByte<EPhysicalSurface>, TSubclassOf<UPBMoveStepSound>> MoveStepSounds;
 
+
 	/** Pointer to player movement component */
 	UPBPlayerMovement* MovementPtr;
 
@@ -85,6 +87,7 @@ private:
 	virtual void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
 
 	void OnRep_IsCrouchRunning();
+
 
 
 protected:
@@ -172,3 +175,4 @@ public:
 
 	virtual bool CanCrouch() const override;
 };
+

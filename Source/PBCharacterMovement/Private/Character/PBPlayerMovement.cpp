@@ -107,7 +107,8 @@ UPBPlayerMovement::UPBPlayerMovement()
 	NavAgentProps.bCanFly = true;
 	PBCharacter = Cast<APBPlayerCharacter>(GetOwner());
 	//Crouching
-
+	NavAgentProps.bCanCrouch = true;
+	SetCrouchedHalfHeight(60.0f);
 }
 
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -1093,3 +1094,4 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 		CalcAvoidanceVelocity(DeltaTime);
 	}
 }
+
