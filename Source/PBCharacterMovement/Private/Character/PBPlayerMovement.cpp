@@ -109,6 +109,7 @@ UPBPlayerMovement::UPBPlayerMovement()
 	//Crouching
 	NavAgentProps.bCanCrouch = true;
 	SetCrouchedHalfHeight(60.0f);
+
 }
 
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -1095,3 +1096,43 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	}
 }
 
+UPBPlayerMovement::UPBPlayerMovement(const FObjectInitializer& ObjectInitializer)
+{
+}
+
+float UPBPlayerMovement::GetMaxSpeed() const
+{
+	return 0.0f;
+}
+
+float UPBPlayerMovement::GetMaxAcceleration() const
+{
+	return 0.0f;
+}
+
+void UPBPlayerMovement::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
+{
+}
+
+FNetworkPredictionData_Client* UPBPlayerMovement::GetPredictionData_Client() const
+{
+	return nullptr;
+}
+
+void UPBPlayerMovement::UpdateFromCompressedFlags(uint8 Flags)
+{
+}
+
+bool UPBPlayerMovement::ShrinkCapsule(float NewUnscaledHalfHeight, bool bClientSimulation)
+{
+	return false;
+}
+
+bool UPBPlayerMovement::ExpandCapsule(float NewUnscaledHalfHeight, bool bClientSimulation)
+{
+	return false;
+}
+
+void UPBPlayerMovement::SetUpdatedComponent(USceneComponent* NewUpdatedComponent)
+{
+}
