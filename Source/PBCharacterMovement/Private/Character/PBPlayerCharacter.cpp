@@ -47,10 +47,6 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	GetMesh()->SetCollisionObjectType(ECC_PhysicsBody);  // Can't be of type 'pawn' or capsule
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-<<<<<<< HEAD
-=======
-	GetCapsuleComponent()->InitCapsuleSize(34.f, 72.f);
->>>>>>> f57d59fc5d614e4f1484be87873048c87f5b82c1
 
 	bCrouching = false;
 	BaseMovementSpeed = 650.f;
@@ -87,48 +83,6 @@ void APBPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 	// Max jump time to get to the top of the arc
 	MaxJumpTime = -4.0f * GetCharacterMovement()->JumpZVelocity / (3.0f * GetCharacterMovement()->GetGravityZ());
-}
-
-void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
-{
-	float TargetCapsuleHalfHeight{};
-	if (bCrouching)
-	{
-		TargetCapsuleHalfHeight = CrouchingCapsuleHalfHeight;
-	}
-	else
-	{
-		TargetCapsuleHalfHeight = StandingCapsuleHalfHeight;
-	}
-	const float InterpHalfHeight{ FMath::FInterpTo(GetCapsuleComponent()->GetScaledCapsuleHalfHeight(), TargetCapsuleHalfHeight, DeltaTime, 20.f) };
-
-	// Negative value if crouching; Positive value if standing
-	const float DeltaCapsuleHalfHeight{ InterpHalfHeight - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() };
-	const FVector MeshOffset{ 0.f, 0.f, -DeltaCapsuleHalfHeight };
-	GetMesh()->AddLocalOffset(MeshOffset);
-
-	GetCapsuleComponent()->SetCapsuleHalfHeight(InterpHalfHeight);
-}
-
-void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
-{
-	float TargetCapsuleHalfHeight{};
-	if (bCrouching)
-	{
-		TargetCapsuleHalfHeight = CrouchingCapsuleHalfHeight;
-	}
-	else
-	{
-		TargetCapsuleHalfHeight = StandingCapsuleHalfHeight;
-	}
-	const float InterpHalfHeight{ FMath::FInterpTo(GetCapsuleComponent()->GetScaledCapsuleHalfHeight(), TargetCapsuleHalfHeight, DeltaTime, 20.f) };
-
-	// Negative value if crouching; Positive value if standing
-	const float DeltaCapsuleHalfHeight{ InterpHalfHeight - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() };
-	const FVector MeshOffset{ 0.f, 0.f, -DeltaCapsuleHalfHeight };
-	GetMesh()->AddLocalOffset(MeshOffset);
-
-	GetCapsuleComponent()->SetCapsuleHalfHeight(InterpHalfHeight);
 }
 
 void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
