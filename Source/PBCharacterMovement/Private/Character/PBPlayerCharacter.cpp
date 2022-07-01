@@ -28,6 +28,19 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	NetCullDistanceSquared = 900000000.0f;
 
+		Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("PawnMesh1P"));
+		Mesh1P->SetupAttachment(GetCapsuleComponent());
+		Mesh1P->bOnlyOwnerSee = true;
+		Mesh1P->bOwnerNoSee = false;
+		Mesh1P->bCastDynamicShadow = false;
+		Mesh1P->bReceivesDecals = false;
+		Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+		Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+		Mesh1P->SetCollisionObjectType(ECC_Pawn);
+		Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
