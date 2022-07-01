@@ -131,6 +131,27 @@ void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
 	GetCapsuleComponent()->SetCapsuleHalfHeight(InterpHalfHeight);
 }
 
+void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
+{
+	float TargetCapsuleHalfHeight{};
+	if (bCrouching)
+	{
+		TargetCapsuleHalfHeight = CrouchingCapsuleHalfHeight;
+	}
+	else
+	{
+		TargetCapsuleHalfHeight = StandingCapsuleHalfHeight;
+	}
+	const float InterpHalfHeight{ FMath::FInterpTo(GetCapsuleComponent()->GetScaledCapsuleHalfHeight(), TargetCapsuleHalfHeight, DeltaTime, 20.f) };
+
+	// Negative value if crouching; Positive value if standing
+	const float DeltaCapsuleHalfHeight{ InterpHalfHeight - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() };
+	const FVector MeshOffset{ 0.f, 0.f, -DeltaCapsuleHalfHeight };
+	GetMesh()->AddLocalOffset(MeshOffset);
+
+	GetCapsuleComponent()->SetCapsuleHalfHeight(InterpHalfHeight);
+}
+
 void APBPlayerCharacter::OnRep_IsSprinting()
 {
 	UPBPlayerMovement* MovementComponent = Cast<UPBPlayerMovement>(GetCharacterMovement());

@@ -96,10 +96,6 @@ private:
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Camera")
 	float BaseTurnRate;
 
-	/** pawn mesh: 1st person view */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-		USkeletalMeshComponent* Mesh1P;
-
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate.*/
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Camera")
 	float BaseLookUpRate;
@@ -134,12 +130,8 @@ protected:
 	// Interps capsule half height when crouching/standing
 	void InterpCapsuleHalfHeight(float DeltaTime);
 
-<<<<<<< HEAD
-	void CrouchButtonPressed();
-=======
 
 
->>>>>>> f57d59fc5d614e4f1484be87873048c87f5b82c1
 
 public:
 	APBPlayerCharacter(const FObjectInitializer& ObjectInitializer);
