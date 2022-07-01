@@ -28,25 +28,13 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	NetCullDistanceSquared = 900000000.0f;
 
-	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("PawnMesh1P"));
-	Mesh1P->SetupAttachment(GetCapsuleComponent());
-	Mesh1P->bOnlyOwnerSee = true;
-	Mesh1P->bOwnerNoSee = false;
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->bReceivesDecals = false;
-	Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-	Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
-	Mesh1P->SetCollisionObjectType(ECC_Pawn);
-	Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
-
-
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetCollisionObjectType(ECC_PhysicsBody);  // Can't be of type 'pawn' or capsule
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetCapsuleComponent()->InitCapsuleSize(34.f, 72.f);
 
 	bCrouching = false;
 	BaseMovementSpeed = 650.f;
@@ -60,17 +48,30 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	BaseTurnRate = 45.0f;
 	BaseLookUpRate = 45.0f;
 
+	// Camera eye level
+	BaseEyeHeight = 53.34f;
+
 	// get pointer to movement component
 	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
 
-	// Don't rotate when the controller rotates. Let the controller only affect the camera.
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = true;
-	bUseControllerRotationRoll = false;
+	UCapsuleComponent* CapsuleComp = GetCapsuleComponent();
+	check(CapsuleComp);
+	CapsuleComp->InitCapsuleSize(40.0f, 90.0f);
+	CapsuleComp->SetCollisionProfileName(NAME_PBCharacterCollisionProfile_Capsule);
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f); // ...at this rotation rate
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	check(MeshComp);
+	MeshComp->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));  // Rotate mesh to be X forward since it is exported as Y forward.
+	MeshComp->SetCollisionProfileName(NAME_PBCCharacterCollisionProfile_Mesh);
+
+	UPBPlayerMovement* PBMoveComp = CastChecked<UPBPlayerMovement>(GetCharacterMovement());
+	PBMoveComp->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+	PBMoveComp->bAllowPhysicsRotationDuringAnimRootMotion = false;
+	PBMoveComp->GetNavAgentPropertiesRef().bCanCrouch = true;
+	PBMoveComp->bCanWalkOffLedgesWhenCrouching = true;
+	PBMoveComp->SetCrouchedHalfHeight(65.0f);
+	BaseEyeHeight = 80.0f;
+	CrouchedEyeHeight = 50.0f;
 
 	/*Net Settings*/
 //NetUpdateFrequency = 128.0f;
@@ -84,6 +85,7 @@ void APBPlayerCharacter::BeginPlay()
 	// Max jump time to get to the top of the arc
 	MaxJumpTime = -4.0f * GetCharacterMovement()->JumpZVelocity / (3.0f * GetCharacterMovement()->GetGravityZ());
 }
+
 
 void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
 {
@@ -186,24 +188,6 @@ void APBPlayerCharacter::StopJumping()
 	if (GetCharacterMovement()->bCheatFlying)
 	{
 		Cast<UPBPlayerMovement>(GetMovementComponent())->NoClipVerticalMoveMode = 0;
-	}
-}
-
-void APBPlayerCharacter::CrouchButtonPressed()
-{
-	if (!GetCharacterMovement()->IsFalling())
-	{
-		bCrouching = !bCrouching;
-	}
-	if (bCrouching)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = CrouchMovementSpeed;
-		GetCharacterMovement()->GroundFriction = CrouchingGroundFriction;
-	}
-	else
-	{
-		GetCharacterMovement()->MaxWalkSpeed = BaseMovementSpeed;
-		GetCharacterMovement()->GroundFriction = BaseGroundFriction;
 	}
 }
 
