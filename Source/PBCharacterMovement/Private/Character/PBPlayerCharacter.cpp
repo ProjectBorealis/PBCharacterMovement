@@ -28,19 +28,6 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 
 	NetCullDistanceSquared = 900000000.0f;
 
-		Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("PawnMesh1P"));
-		Mesh1P->SetupAttachment(GetCapsuleComponent());
-		Mesh1P->bOnlyOwnerSee = true;
-		Mesh1P->bOwnerNoSee = false;
-		Mesh1P->bCastDynamicShadow = false;
-		Mesh1P->bReceivesDecals = false;
-		Mesh1P->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
-		Mesh1P->PrimaryComponentTick.TickGroup = TG_PrePhysics;
-		Mesh1P->SetCollisionObjectType(ECC_Pawn);
-		Mesh1P->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		Mesh1P->SetCollisionResponseToAllChannels(ECR_Ignore);
-
-
 	GetMesh()->bReceivesDecals = false;
 	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -49,7 +36,13 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetCapsuleComponent()->InitCapsuleSize(34.f, 72.f);
 
-
+	bCrouching = false;
+	BaseMovementSpeed = 650.f;
+	CrouchMovementSpeed = 300.f;
+	StandingCapsuleHalfHeight = 88.f;
+	CrouchingCapsuleHalfHeight = 44.f;
+	BaseGroundFriction = 2.f;
+	CrouchingGroundFriction = 100.f;
 
 	// set our turn rates for input
 	BaseTurnRate = 45.0f;
@@ -93,6 +86,27 @@ void APBPlayerCharacter::BeginPlay()
 	MaxJumpTime = -4.0f * GetCharacterMovement()->JumpZVelocity / (3.0f * GetCharacterMovement()->GetGravityZ());
 }
 
+
+void APBPlayerCharacter::InterpCapsuleHalfHeight(float DeltaTime)
+{
+	float TargetCapsuleHalfHeight{};
+	if (bCrouching)
+	{
+		TargetCapsuleHalfHeight = CrouchingCapsuleHalfHeight;
+	}
+	else
+	{
+		TargetCapsuleHalfHeight = StandingCapsuleHalfHeight;
+	}
+	const float InterpHalfHeight{ FMath::FInterpTo(GetCapsuleComponent()->GetScaledCapsuleHalfHeight(), TargetCapsuleHalfHeight, DeltaTime, 20.f) };
+
+	// Negative value if crouching; Positive value if standing
+	const float DeltaCapsuleHalfHeight{ InterpHalfHeight - GetCapsuleComponent()->GetScaledCapsuleHalfHeight() };
+	const FVector MeshOffset{ 0.f, 0.f, -DeltaCapsuleHalfHeight };
+	GetMesh()->AddLocalOffset(MeshOffset);
+
+	GetCapsuleComponent()->SetCapsuleHalfHeight(InterpHalfHeight);
+}
 
 void APBPlayerCharacter::OnRep_IsSprinting()
 {
