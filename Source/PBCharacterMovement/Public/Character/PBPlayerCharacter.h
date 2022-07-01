@@ -47,7 +47,40 @@ public:
 		return LastJumpTime;
 	}
 
+
 private:
+	// True when crouching
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		bool bCrouching;
+
+	// Regular movement speed
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float BaseMovementSpeed;
+
+	// Crouch movement speed
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float CrouchMovementSpeed;
+
+	// Current half height of the capsule
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float CurrentCapsuleHalfHeight;
+
+	// Half height of the capsule when not crouching
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float StandingCapsuleHalfHeight;
+
+	// Half height of the capsule when crouching
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float CrouchingCapsuleHalfHeight;
+
+	// Ground friction while not crouching
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float BaseGroundFriction;
+
+	// Ground friction while crouching
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
+		float CrouchingGroundFriction;
+
 	class APBPlayerController* PBController;
 
 	/** when we last jumped */
@@ -62,6 +95,10 @@ private:
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Camera")
 	float BaseTurnRate;
+
+	/** pawn mesh: 1st person view */
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+		USkeletalMeshComponent* Mesh1P;
 
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate.*/
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Camera")
@@ -94,6 +131,10 @@ protected:
 	/* Called when the game starts or when spawned*/
 	virtual void BeginPlay() override;
 
+	// Interps capsule half height when crouching/standing
+	void InterpCapsuleHalfHeight(float DeltaTime);
+
+	void CrouchButtonPressed();
 
 public:
 	APBPlayerCharacter(const FObjectInitializer& ObjectInitializer);
