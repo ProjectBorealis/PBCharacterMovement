@@ -79,6 +79,12 @@ protected:
 	/** If the player has already landed for a frame, and breaking may be applied. */
 	bool bBrakingFrameTolerated;
 
+	/** Wait a frame before crouch speed. */
+	bool bCrouchFrameTolerated = false;
+
+	/** If in the crouching transition */
+	bool bIsInCrouchTransition = false;
+
 	/** If in the crouching transition */
 	bool bInCrouch;
 
@@ -105,7 +111,9 @@ protected:
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float SpeedMultMax;
 
-	bool bAppliedFriction;
+	/** Fraction of uncrouch half-height to check for before doing starting an uncrouch. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
+	float GroundUncrouchCheckFactor = 0.75f;
 
 public:
 	/** Print pos and vel (Source: cl_showpos) */
