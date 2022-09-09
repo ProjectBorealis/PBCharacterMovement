@@ -28,7 +28,10 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	BaseLookUpRate = 45.0f;
 
 	// Camera eye level
-	BaseEyeHeight = 53.34f;
+	DefaultBaseEyeHeight = 53.34f;
+	BaseEyeHeight = DefaultBaseEyeHeight;
+	const float CrouchedHalfHeight = 68.58f / 2.0f;
+	CrouchedEyeHeight = 53.34f - CrouchedHalfHeight;
 
 	// get pointer to movement component
 	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
@@ -254,7 +257,19 @@ void APBPlayerCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent con
 	}
 }
 
+void APBPlayerCharacter::RecalculateBaseEyeHeight() {}
+
 bool APBPlayerCharacter::CanCrouch() const
 {
-	return Super::CanCrouch() || GetCharacterMovement()->bCheatFlying;
+	return !GetCharacterMovement()->bCheatFlying && Super::CanCrouch();
+}
+
+void APBPlayerCharacter::RecalculateCrouchedEyeHeight()
+{
+	if (GetCharacterMovement() != nullptr)
+	{
+		constexpr float EyeHeightRatio = 0.8f;	// how high the character's eyes are, relative to the crouched height
+
+		CrouchedEyeHeight = GetCharacterMovement()->GetCrouchedHalfHeight() * EyeHeightRatio;
+	}
 }

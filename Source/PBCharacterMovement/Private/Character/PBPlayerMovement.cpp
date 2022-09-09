@@ -65,6 +65,7 @@ UPBPlayerMovement::UPBPlayerMovement()
 	BrakingDecelerationWalking = 190.5f;
 	// HL2 step height
 	MaxStepHeight = 34.29f;
+	DefaultStepHeight = MaxStepHeight;
 	// Step height scaling due to speed
 	MinStepHeight = 7.5f;
 	// Jump z from HL2's 160Hu
@@ -81,7 +82,7 @@ UPBPlayerMovement::UPBPlayerMovement()
 	// Start out braking
 	bBrakingFrameTolerated = true;
 	// Crouching
-	CrouchedHalfHeight = 34.29f;
+	SetCrouchedHalfHeight(34.29f);
 	MaxWalkSpeedCrouched = 120.65f;
 	bCanWalkOffLedgesWhenCrouching = true;
 	CrouchTime = MOVEMENT_DEFAULT_CROUCHTIME;
@@ -126,6 +127,36 @@ UPBPlayerMovement::UPBPlayerMovement()
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {	
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// Don't interfere with crouch transition
+	// for public: make camera manager optional
+	if (!bIsInCrouchTransition && PBPlayerCharacter->GetPBController()->PlayerCameraManager)
+	{
+		float TargetEyeHeight = (bWantsToCrouch || IsCrouching()) ? CharacterOwner->CrouchedEyeHeight : PBPlayerCharacter->GetDefaultBaseEyeHeight();
+		// If we aren't at the final(default) base eye height, animate to that in all cases
+		if (PawnOwner->BaseEyeHeight != TargetEyeHeight)
+		{
+			float Diff = FMath::Abs(PawnOwner->BaseEyeHeight - TargetEyeHeight);
+			// We're way far off! Reel it back in.
+			if (Diff > DefaultStepHeight)
+			{
+				if (PawnOwner->BaseEyeHeight < TargetEyeHeight)
+				{
+					PawnOwner->BaseEyeHeight = TargetEyeHeight - DefaultStepHeight;
+				}
+				else
+				{
+					PawnOwner->BaseEyeHeight = TargetEyeHeight + DefaultStepHeight;
+				}
+			}
+			PawnOwner->BaseEyeHeight = FMath::FInterpConstantTo(PawnOwner->BaseEyeHeight, TargetEyeHeight, DeltaTime, (Diff + DefaultStepHeight) * 5.0f);
+			if (FMath::IsNearlyEqual(PawnOwner->BaseEyeHeight, TargetEyeHeight))
+			{
+				PawnOwner->BaseEyeHeight = TargetEyeHeight;
+			}
+			PBPlayerCharacter->GetPBController()->PlayerCameraManager->UpdateCamera(0.0f);
+		}
+	}
 
 	// Skip player movement when we're simulating physics (ie ragdoll)
 	if (UpdatedComponent->IsSimulatingPhysics())
@@ -768,7 +799,7 @@ bool UPBPlayerMovement::StepUp(const FVector& GravDir, const FVector& Delta, con
 }
 #endif
 
-void UPBPlayerMovement::TwoWallAdjust(FVector& OutDelta, const FHitResult& Hit, const FVector& OldHitNormal) const
+void UPBPlayerMovement::TwoWallAdjust(FVector& Delta, const FHitResult& Hit, const FVector& OldHitNormal) const
 {
 	UMovementComponent::TwoWallAdjust(Delta, Hit, OldHitNormal);
 	if (IsMovingOnGround())
@@ -1295,6 +1326,21 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	{
 		CalcAvoidanceVelocity(DeltaTime);
 	}
+}
+
+void UPBPlayerMovement::SetCrouchedHalfHeight(const float NewValue)
+{
+	CrouchedHalfHeight = NewValue;
+
+	if (PBCharacter != nullptr)
+	{
+		PBCharacter->RecalculateCrouchedEyeHeight();
+	}
+}
+
+float UPBPlayerMovement::GetCrouchedHalfHeight() const
+{ 
+	return CrouchedHalfHeight; 
 }
 
 void UPBPlayerMovement::Crouch(bool bClientSimulation)

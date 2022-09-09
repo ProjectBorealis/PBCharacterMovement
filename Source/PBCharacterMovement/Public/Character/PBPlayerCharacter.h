@@ -23,6 +23,10 @@ public:
 	virtual void OnJumped_Implementation() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 
+	void RecalculateBaseEyeHeight();
+	/** Calculates the crouched eye height based on movement component settings */
+	void RecalculateCrouchedEyeHeight();
+
 	/* Triggered when player's movement mode has changed */
 	void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode) override;
 
@@ -38,6 +42,9 @@ public:
 
 private:
 	class APBPlayerController* PBController;
+
+	/** cached default eye height */
+	float DefaultBaseEyeHeight;
 
 	/** when we last jumped */
 	float LastJumpTime;
@@ -125,6 +132,8 @@ public:
 	};
 
 #pragma endregion Mutators
+
+	float GetDefaultBaseEyeHeight() const { return DefaultBaseEyeHeight; }
 
 	UFUNCTION()
 	void ToggleNoClip();

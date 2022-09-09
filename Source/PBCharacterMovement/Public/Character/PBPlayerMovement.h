@@ -137,6 +137,14 @@ public:
 	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 
+	/** Sets collision half-height when crouching and updates dependent computations */
+	UFUNCTION(BlueprintCallable)
+	void SetCrouchedHalfHeight(const float NewValue);
+
+	/** Returns the collision half-height when crouching (component scale is applied separately) */
+	UFUNCTION(BlueprintCallable)
+	float GetCrouchedHalfHeight() const;
+
 	// Noclip overrides
 	virtual bool DoJump(bool bClientSimulation) override;
 
@@ -180,6 +188,8 @@ public:
 private:
 	/** Plays sound effect according to movement and surface */
 	void PlayMoveSound(float DeltaTime);
+
+	float DefaultStepHeight;
 
 #if WIP_SURFING
 	void PreemptCollision(float DeltaTime, float SurfaceFriction);
