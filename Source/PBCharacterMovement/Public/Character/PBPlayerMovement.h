@@ -18,11 +18,6 @@
 #define MOVEMENT_DEFAULT_UNCROUCHTIME 0.2f
 #define MOVEMENT_DEFAULT_UNCROUCHJUMPTIME 0.8f
 
-// Testing mid-air stepping code
-#ifndef MID_AIR_STEP
-#define MID_AIR_STEP 0
-#endif
-
 // Testing surfing code
 #ifndef WIP_SURFING
 #define WIP_SURFING 0
@@ -113,9 +108,30 @@ protected:
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float SpeedMultMax;
 
+	/** The maximum angle we can roll for camera adjust */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
+	float RollAngle = 0.0f;
+
+	/** Speed of rolling the camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
+	float RollSpeed = 0.0f;
+
+	/** Speed of rolling the camera */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
+	float BounceMultiplier = 0.0f;
+
+	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
+	float AxisSpeedLimit = 6667.5f;
+
+	/** Threshold relating to speed ratio and friction which causes us to catch air */
+	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
+	float SlideLimit = 0.5f;
+
 	/** Fraction of uncrouch half-height to check for before doing starting an uncrouch. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
 	float GroundUncrouchCheckFactor = 0.75f;
+
+	bool bShouldPlayMoveSounds = true;
 
 public:
 	/** Print pos and vel (Source: cl_showpos) */
@@ -149,22 +165,18 @@ public:
 	float GetCrouchedHalfHeight() const;
 #endif
 
-	// Noclip overrides
-	virtual bool DoJump(bool bClientSimulation) override;
+	// Jump overrides
+	bool CanAttemptJump() const override;
+	bool DoJump(bool bClientSimulation) override;
 
-#if MID_AIR_STEP
-	// Step up
-	virtual void PhysFalling(float deltaTime, int32 Iterations) override;
-	virtual bool CanStepUp(const FHitResult& Hit) const override;
-	virtual bool StepUp(const FVector& GravDir, const FVector& Delta, const FHitResult& Hit,
-						struct UCharacterMovementComponent::FStepDownResult* OutStepDownResult = NULL) override;
-#endif
-
-	// Remove slope boost constaints
-	virtual void TwoWallAdjust(FVector& Delta, const FHitResult& Hit, const FVector& OldHitNormal) const override;
-	virtual float SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal, FHitResult& Hit, bool bHandleImpact = false);
-	virtual FVector HandleSlopeBoosting(const FVector& SlideResult, const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
-	virtual bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
+	void TwoWallAdjust(FVector& OutDelta, const FHitResult& Hit, const FVector& OldHitNormal) const override;
+	float SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal, FHitResult& Hit, bool bHandleImpact = false) override;
+	FVector ComputeSlideVector(const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
+	FVector HandleSlopeBoosting(const FVector& SlideResult, const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
+	bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
+	bool IsWithinEdgeTolerance(const FVector& CapsuleLocation, const FVector& TestImpactPoint, const float CapsuleRadius) const override;
+	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;
+	bool ShouldCheckForValidLandingSpot(float DeltaTime, const FVector& Delta, const FHitResult& Hit) const override;
 
 	// Acceleration
 	FORCEINLINE FVector GetAcceleration() const
@@ -173,6 +185,11 @@ public:
 	}
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode);
+
+	/** Do camera roll effect based on velocity */
+	float GetCameraRoll();
+
+	void SetNoClip(bool bNoClip);
 
 	/** Toggle no clip */
 	void ToggleNoClip();
@@ -193,7 +210,14 @@ private:
 	/** Plays sound effect according to movement and surface */
 	void PlayMoveSound(float DeltaTime);
 
+	virtual void PlayJumpSound(const FHitResult& Hit, bool bJumped);
+
 	float DefaultStepHeight;
+	float DefaultWalkableFloorZ;
+	float SurfaceFriction;
+
+	bool bHasDeferredMovementMode;
+	EMovementMode DeferredMovementMode;
 
 #if WIP_SURFING
 	void PreemptCollision(float DeltaTime, float SurfaceFriction);
