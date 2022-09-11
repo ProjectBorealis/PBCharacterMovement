@@ -6,6 +6,8 @@
 
 #include "GameFramework/Character.h"
 
+#include "Runtime/Launch/Resources/Version.h"
+
 #include "PBPlayerCharacter.generated.h"
 
 class USoundCue;
@@ -23,9 +25,12 @@ public:
 	virtual void OnJumped_Implementation() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 
-	void RecalculateBaseEyeHeight();
+	void RecalculateBaseEyeHeight() override;
+
+#if ENGINE_MAJOR_VERSION == 4
 	/** Calculates the crouched eye height based on movement component settings */
 	void RecalculateCrouchedEyeHeight();
+#endif
 
 	/* Triggered when player's movement mode has changed */
 	void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode) override;
@@ -157,12 +162,6 @@ public:
 	 */
 	UFUNCTION()
 	void LookUp(bool bIsPure, float Rate);
-
-	/** Change camera height */
-	void RecalculateBaseEyeHeight() override
-	{
-		Super::Super::RecalculateBaseEyeHeight();
-	}
 
 	virtual bool CanCrouch() const override;
 };

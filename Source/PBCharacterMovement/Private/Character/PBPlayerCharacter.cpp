@@ -264,6 +264,7 @@ bool APBPlayerCharacter::CanCrouch() const
 	return !GetCharacterMovement()->bCheatFlying && Super::CanCrouch();
 }
 
+#if ENGINE_MAJOR_VERSION == 4
 void APBPlayerCharacter::RecalculateCrouchedEyeHeight()
 {
 	if (GetCharacterMovement() != nullptr)
@@ -273,3 +274,4 @@ void APBPlayerCharacter::RecalculateCrouchedEyeHeight()
 		CrouchedEyeHeight = GetCharacterMovement()->GetCrouchedHalfHeight() * EyeHeightRatio;
 	}
 }
+#endif
