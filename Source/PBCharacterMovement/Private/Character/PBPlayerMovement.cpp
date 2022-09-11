@@ -1328,6 +1328,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	}
 }
 
+#if ENGINE_MAJOR_VERSION == 4
 void UPBPlayerMovement::SetCrouchedHalfHeight(const float NewValue)
 {
 	CrouchedHalfHeight = NewValue;
@@ -1342,6 +1343,7 @@ float UPBPlayerMovement::GetCrouchedHalfHeight() const
 { 
 	return CrouchedHalfHeight; 
 }
+#endinf
 
 void UPBPlayerMovement::Crouch(bool bClientSimulation)
 {

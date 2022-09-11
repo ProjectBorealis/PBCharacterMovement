@@ -6,6 +6,8 @@
 
 #include "GameFramework/CharacterMovementComponent.h"
 
+#include "Runtime/Launch/Resources/Version.h"
+
 #include "PBPlayerMovement.generated.h"
 
 #define LADDER_MOUNT_TIMEOUT 0.2f
@@ -137,6 +139,7 @@ public:
 	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 
+#if ENGINE_MAJOR_VERSION == 4
 	/** Sets collision half-height when crouching and updates dependent computations */
 	UFUNCTION(BlueprintCallable)
 	void SetCrouchedHalfHeight(const float NewValue);
@@ -144,6 +147,7 @@ public:
 	/** Returns the collision half-height when crouching (component scale is applied separately) */
 	UFUNCTION(BlueprintCallable)
 	float GetCrouchedHalfHeight() const;
+#endif
 
 	// Noclip overrides
 	virtual bool DoJump(bool bClientSimulation) override;
