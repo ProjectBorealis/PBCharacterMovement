@@ -1343,7 +1343,7 @@ float UPBPlayerMovement::GetCrouchedHalfHeight() const
 { 
 	return CrouchedHalfHeight; 
 }
-#endinf
+#endif
 
 void UPBPlayerMovement::Crouch(bool bClientSimulation)
 {
