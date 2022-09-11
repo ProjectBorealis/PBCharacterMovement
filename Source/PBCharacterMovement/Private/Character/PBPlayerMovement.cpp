@@ -130,9 +130,9 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 
 	// Don't interfere with crouch transition
 	// for public: make camera manager optional
-	if (!bIsInCrouchTransition && PBPlayerCharacter->GetPBController()->PlayerCameraManager)
+	if (!bIsInCrouchTransition && PBCharacter->GetPBController()->PlayerCameraManager)
 	{
-		float TargetEyeHeight = (bWantsToCrouch || IsCrouching()) ? CharacterOwner->CrouchedEyeHeight : PBPlayerCharacter->GetDefaultBaseEyeHeight();
+		float TargetEyeHeight = (bWantsToCrouch || IsCrouching()) ? CharacterOwner->CrouchedEyeHeight : PBCharacter->GetDefaultBaseEyeHeight();
 		// If we aren't at the final(default) base eye height, animate to that in all cases
 		if (PawnOwner->BaseEyeHeight != TargetEyeHeight)
 		{
@@ -154,7 +154,7 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			{
 				PawnOwner->BaseEyeHeight = TargetEyeHeight;
 			}
-			PBPlayerCharacter->GetPBController()->PlayerCameraManager->UpdateCamera(0.0f);
+			PBCharacter->GetPBController()->PlayerCameraManager->UpdateCamera(0.0f);
 		}
 	}
 
