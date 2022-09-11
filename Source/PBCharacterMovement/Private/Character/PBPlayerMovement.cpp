@@ -128,36 +128,6 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 {	
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// Don't interfere with crouch transition
-	// for public: make camera manager optional
-	if (!bIsInCrouchTransition && PBCharacter->GetPBController()->PlayerCameraManager)
-	{
-		float TargetEyeHeight = (bWantsToCrouch || IsCrouching()) ? CharacterOwner->CrouchedEyeHeight : PBCharacter->GetDefaultBaseEyeHeight();
-		// If we aren't at the final(default) base eye height, animate to that in all cases
-		if (PawnOwner->BaseEyeHeight != TargetEyeHeight)
-		{
-			float Diff = FMath::Abs(PawnOwner->BaseEyeHeight - TargetEyeHeight);
-			// We're way far off! Reel it back in.
-			if (Diff > DefaultStepHeight)
-			{
-				if (PawnOwner->BaseEyeHeight < TargetEyeHeight)
-				{
-					PawnOwner->BaseEyeHeight = TargetEyeHeight - DefaultStepHeight;
-				}
-				else
-				{
-					PawnOwner->BaseEyeHeight = TargetEyeHeight + DefaultStepHeight;
-				}
-			}
-			PawnOwner->BaseEyeHeight = FMath::FInterpConstantTo(PawnOwner->BaseEyeHeight, TargetEyeHeight, DeltaTime, (Diff + DefaultStepHeight) * 5.0f);
-			if (FMath::IsNearlyEqual(PawnOwner->BaseEyeHeight, TargetEyeHeight))
-			{
-				PawnOwner->BaseEyeHeight = TargetEyeHeight;
-			}
-			PBCharacter->GetPBController()->PlayerCameraManager->UpdateCamera(0.0f);
-		}
-	}
-
 	// Skip player movement when we're simulating physics (ie ragdoll)
 	if (UpdatedComponent->IsSimulatingPhysics())
 	{

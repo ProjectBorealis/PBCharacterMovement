@@ -35,18 +35,12 @@ public:
 	/* Triggered when player's movement mode has changed */
 	void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode) override;
 
-	class APBPlayerController* GetPBController()
-	{
-		return PBController;
-	}
-
 	float GetLastJumpTime()
 	{
 		return LastJumpTime;
 	}
 
 private:
-	class APBPlayerController* PBController;
 
 	/** cached default eye height */
 	float DefaultBaseEyeHeight;
