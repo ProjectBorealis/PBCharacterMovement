@@ -9,6 +9,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "PhysicsEngine/PhysicsSettings.h"
 #include "Sound/SoundCue.h"
 
 #include "Sound/PBMoveStepSound.h"
@@ -73,7 +74,7 @@ UPBPlayerMovement::UPBPlayerMovement()
 	// Jump z from HL2's 160Hu
 	// 21Hu jump height
 	// 510ms jump time
-	JumpZVelocity = FMath::Sqrt(2.0f * FMath::Abs(UPhysicsSettings::Get()->DefaultGravityZ) * HU_TO_UU(37.855f));
+	JumpZVelocity = FMath::Sqrt(2.0f * FMath::Abs(UPhysicsSettings::Get()->DefaultGravityZ) * 72.113775f);
 	// Don't bounce off characters
 	JumpOffJumpZFactor = 0.0f;
 	// Default show pos to false
@@ -300,12 +301,8 @@ bool UPBPlayerMovement::IsValidLandingSpot(const FVector& CapsuleLocation, const
 		CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleSize(PawnRadius, PawnHalfHeight);
 
 		// Reject hits that are above our lower hemisphere (can happen when sliding down a vertical surface).
-		const float LowerHemisphereZ = Hit.Location.Z - PawnHalfHeight + PawnRadius;
-		if (Hit.ImpactPoint.Z >= LowerHemisphereZ)
-
 		if (bUseFlatBaseForFloorChecks)
 		{
-			return false;
 			// Reject hits that are above our box
 			const float LowerHemisphereZ = Hit.Location.Z - PawnHalfHeight + SWEEP_EDGE_REJECT_DISTANCE + KINDA_SMALL_NUMBER;
 			if ((Hit.ImpactNormal.Z < GetWalkableFloorZ() || Hit.ImpactNormal.Z == 1.0f) && Hit.ImpactPoint.Z > LowerHemisphereZ)
@@ -347,6 +344,24 @@ bool UPBPlayerMovement::IsValidLandingSpot(const FVector& CapsuleLocation, const
 	return true;
 }
 
+FHitResult TraceLineFullCharacter(UCapsuleComponent* CharacterToTraceBy, UWorld* World, AActor* CallingActor, bool bForceTraceComplex /*= false*/, bool bDebug /*= false*/)
+{
+	auto RV_TraceParams = FCollisionQueryParams(SCENE_QUERY_STAT(CharacterTrace), true, CallingActor);
+	RV_TraceParams.bTraceComplex = CharacterToTraceBy->bTraceComplexOnMove || bForceTraceComplex;
+	RV_TraceParams.bReturnPhysicalMaterial = true;
+
+	// Re-initialize hit info
+	FHitResult RV_Hit(ForceInit);
+
+	World->SweepSingleByChannel(RV_Hit, CharacterToTraceBy->GetComponentLocation(), CharacterToTraceBy->GetComponentLocation() - FVector(0, 0, CharacterToTraceBy->GetScaledCapsuleHalfHeight() * 2.f), FQuat::Identity, ECC_Visibility, FCollisionShape::MakeBox(FVector(CharacterToTraceBy->GetScaledCapsuleRadius(), CharacterToTraceBy->GetScaledCapsuleRadius(), CharacterToTraceBy->GetScaledCapsuleHalfHeight() * 1.5f)), RV_TraceParams);
+	if (bDebug)
+	{
+		DrawDebugBox(World, CharacterToTraceBy->GetComponentLocation() - FVector(0, 0, CharacterToTraceBy->GetScaledCapsuleHalfHeight()), FVector(CharacterToTraceBy->GetScaledCapsuleRadius(), CharacterToTraceBy->GetScaledCapsuleRadius(), CharacterToTraceBy->GetScaledCapsuleHalfHeight()), FColor(255, 0, 0), false, -1, 0, 12.333);
+	}
+
+	return RV_Hit;
+}
+
 void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
@@ -359,7 +374,7 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 
 	if (PreviousMovementMode == MOVE_Walking && MovementMode == MOVE_Falling)
 	{
-		Hit = UPBUtilityLibrary::TraceLineFullCharacter(CharacterOwner->GetCapsuleComponent(), GetWorld(), CharacterOwner);
+		Hit = TraceLineFullCharacter(CharacterOwner->GetCapsuleComponent(), GetWorld(), CharacterOwner);
 		bJumped = true;
 	}
 	else if (PreviousMovementMode == MOVE_Falling && MovementMode == MOVE_Walking)
@@ -471,6 +486,19 @@ void UPBPlayerMovement::ApplyVelocityBraking(float DeltaTime, float Friction, fl
 	}
 }
 
+UPBMoveStepSound* UPBPlayerMovement::GetMoveStepSoundBySurface(EPhysicalSurface SurfaceType) const
+{
+	TSubclassOf<UPBMoveStepSound>* GotSound = PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(SurfaceType));
+
+	if (GotSound)
+	{
+		return GotSound->GetDefaultObject();
+	}
+
+	return nullptr;
+}
+
+
 void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 {
 	if (!bShouldPlayMoveSounds)
@@ -507,7 +535,7 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 
 	// Only play sounds if we are moving fast enough on the ground or on a
 	// ladder
-	const bool bPlaySound = (bBrakingFrameTolerated || bOnLadder) && Speed >= RunSpeedThreshold * RunSpeedThreshold && !ShouldCrouchSlide();
+	const bool bPlaySound = (bBrakingFrameTolerated || bOnLadder) && Speed >= RunSpeedThreshold * RunSpeedThreshold;
 
 	if (!bPlaySound)
 	{
@@ -607,12 +635,8 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 		const FVector Location = CharacterOwner->GetActorLocation();
 		const FVector StepLocation(FVector(Location.X, Location.Y, Location.Z - GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
 
-		UPBGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);
-
-		if (!PBPlayerCharacter->IsNoTargetActive())
-		{
-			UAISense_Hearing::ReportNoiseEvent(GetWorld(), StepLocation, MoveSoundVolume, CharacterOwner);
-		}
+		/*UPBGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);*/
+		UGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);
 
 		StepSide = !StepSide;
 	}
@@ -629,7 +653,7 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 	TSubclassOf<UPBMoveStepSound>* GotSound = nullptr;
 	if (Hit.PhysMaterial.IsValid())
 	{
-		GotSound = PBPlayerCharacter->GetMoveStepSound(Hit.PhysMaterial->SurfaceType);
+		GotSound = PBCharacter->GetMoveStepSound(Hit.PhysMaterial->SurfaceType);
 	}
 	if (GotSound)
 	{
@@ -637,11 +661,11 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 	}
 	if (!MoveSound)
 	{
-		if (!PBPlayerCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(SurfaceType_Default)))
+		if (!PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(SurfaceType_Default)))
 		{
 			return;
 		}
-		MoveSound = PBPlayerCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(SurfaceType_Default))->GetDefaultObject();
+		MoveSound = PBCharacter->GetMoveStepSound(TEnumAsByte<EPhysicalSurface>(SurfaceType_Default))->GetDefaultObject();
 	}
 
 	if (MoveSound)
@@ -651,16 +675,16 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 		// if we didn't jump, adjust volume for landing
 		if (!bJumped)
 		{
-			const float FallSpeed = PBPlayerCharacter->GetFallSpeed();
-			if (FallSpeed > PBPlayerCharacter->GetMinSpeedForFallDamage())
+			const float FallSpeed = PBCharacter->GetFallSpeed();
+			if (FallSpeed > PBCharacter->GetMinSpeedForFallDamage())
 			{
 				MoveSoundVolume = 1.0f;
 			}
-			else if (FallSpeed > PBPlayerCharacter->GetMinSpeedForFallDamage() / 2.0f)
+			else if (FallSpeed > PBCharacter->GetMinSpeedForFallDamage() / 2.0f)
 			{
 				MoveSoundVolume = 0.85f;
 			}
-			else if (FallSpeed < PBPlayerCharacter->GetMinLandBounceSpeed())
+			else if (FallSpeed < PBCharacter->GetMinLandBounceSpeed())
 			{
 				MoveSoundVolume = 0.0f;
 			}
@@ -671,7 +695,7 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 		}
 		else
 		{
-			MoveSoundVolume = PBPlayerCharacter->IsSprinting() ? MoveSound->GetSprintVolume() : MoveSound->GetWalkVolume();
+			MoveSoundVolume = PBCharacter->IsSprinting() ? MoveSound->GetSprintVolume() : MoveSound->GetWalkVolume();
 		}
 
 		if (IsCrouching())
@@ -697,12 +721,8 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 		Sound->VolumeMultiplier = MoveSoundVolume;
 		const FVector Location = CharacterOwner->GetActorLocation();
 		const FVector StepLocation(Location.X, Location.Y, Location.Z - GetCharacterOwner()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-		UPBGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);
-
-		if (!PBPlayerCharacter->IsNoTargetActive())
-		{
-			UAISense_Hearing::ReportNoiseEvent(GetWorld(), StepLocation, MoveSoundVolume, CharacterOwner);
-		}
+		/*UPBGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);*/
+		UGameplayStatics::SpawnSoundAtLocation(CharacterOwner->GetWorld(), Sound, StepLocation);
 	}
 }
 
@@ -1305,10 +1325,10 @@ float UPBPlayerMovement::GetMaxSpeed() const
 {
 	if (bCheatFlying)
 	{
-		return (PBPlayerCharacter->IsSprinting() ? SprintSpeed : WalkSpeed) * 1.5f;
+		return (PBCharacter->IsSprinting() ? SprintSpeed : WalkSpeed) * 1.5f;
 	}
 	float Speed;
-	if (PBPlayerCharacter->IsSprinting())
+	if (PBCharacter->IsSprinting())
 	{
 		if (IsCrouching() && bCrouchFrameTolerated)
 		{
@@ -1319,7 +1339,7 @@ float UPBPlayerMovement::GetMaxSpeed() const
 			Speed = SprintSpeed;
 		}
 	}
-	else if (PBPlayerCharacter->DoesWantToWalk())
+	else if (PBCharacter->DoesWantToWalk())
 	{
 		Speed = WalkSpeed;
 	}
