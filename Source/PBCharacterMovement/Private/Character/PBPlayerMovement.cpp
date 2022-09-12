@@ -130,6 +130,12 @@ UPBPlayerMovement::UPBPlayerMovement()
 	GravityScale = DesiredGravity / UPhysicsSettings::Get()->DefaultGravityZ;
 	// Make sure ramp movement in correct
 	bMaintainHorizontalGroundVelocity = true;
+
+	// Fall Damage Initializations
+	// PLAYER_MAX_SAFE_FALL_SPEED
+	MinSpeedForFallDamage = 1002.9825f;
+	// PLAYER_MIN_BOUNCE_SPEED
+	MinLandBounceSpeed = 329.565f;
 }
 
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -344,7 +350,7 @@ bool UPBPlayerMovement::IsValidLandingSpot(const FVector& CapsuleLocation, const
 	return true;
 }
 
-FHitResult TraceLineFullCharacter(UCapsuleComponent* CharacterToTraceBy, UWorld* World, AActor* CallingActor, bool bForceTraceComplex /*= false*/, bool bDebug /*= false*/)
+FHitResult TraceLineFullCharacter(UCapsuleComponent* CharacterToTraceBy, UWorld* World, AActor* CallingActor, bool bForceTraceComplex, bool bDebug)
 {
 	auto RV_TraceParams = FCollisionQueryParams(SCENE_QUERY_STAT(CharacterTrace), true, CallingActor);
 	RV_TraceParams.bTraceComplex = CharacterToTraceBy->bTraceComplexOnMove || bForceTraceComplex;
@@ -374,7 +380,7 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 
 	if (PreviousMovementMode == MOVE_Walking && MovementMode == MOVE_Falling)
 	{
-		Hit = TraceLineFullCharacter(CharacterOwner->GetCapsuleComponent(), GetWorld(), CharacterOwner);
+		Hit = TraceLineFullCharacter(CharacterOwner->GetCapsuleComponent(), GetWorld(), CharacterOwner, false, false);
 		bJumped = true;
 	}
 	else if (PreviousMovementMode == MOVE_Falling && MovementMode == MOVE_Walking)
@@ -675,7 +681,7 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 		// if we didn't jump, adjust volume for landing
 		if (!bJumped)
 		{
-			const float FallSpeed = PBCharacter->GetFallSpeed();
+			const float FallSpeed = -Velocity.Z;
 			if (FallSpeed > PBCharacter->GetMinSpeedForFallDamage())
 			{
 				MoveSoundVolume = 1.0f;
@@ -825,11 +831,15 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	const bool bZeroAcceleration = Acceleration.IsNearlyZero();
 	const bool bIsGroundMove = IsMovingOnGround() && bBrakingFrameTolerated;
 
-	float SurfaceFriction = 1.0f;
-	UPhysicalMaterial* PhysMat = CurrentFloor.HitResult.PhysMaterial.Get();
-	if (PhysMat)
+	if (!IsFalling() && CurrentFloor.IsWalkableFloor())
 	{
-		SurfaceFriction = FMath::Min(1.0f, PhysMat->Friction * 1.25f);
+		SurfaceFriction = GetFrictionFromHit(CurrentFloor.HitResult);
+	}
+	else
+	{
+		constexpr float JumpVelocity = HU_TO_UU(140.0f);
+		const bool bPlayerControlsMovedVertically = bOnLadder || Velocity.Z > JumpVelocity || Velocity.Z <= 0.0f;
+		SurfaceFriction = bPlayerControlsMovedVertically ? 1.0f : 0.25f;
 	}
 
 	// Apply friction

@@ -70,6 +70,14 @@ private:
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Sounds")
 	TMap<TEnumAsByte<EPhysicalSurface>, TSubclassOf<UPBMoveStepSound>> MoveStepSounds;
 
+		/** Minimum speed to play the camera shake for landing */
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Damage")
+	float MinLandBounceSpeed;
+
+	/** Don't take damage below this speed - so jumping doesn't damage */
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Damage")
+	float MinSpeedForFallDamage;
+
 	/** Pointer to player movement component */
 	UPBPlayerMovement* MovementPtr;
 
@@ -136,6 +144,11 @@ public:
 
 	UFUNCTION()
 	void ToggleNoClip();
+
+	UFUNCTION(Category = "Player Movement", BlueprintPure)
+	float GetMinSpeedForFallDamage() const { return MinSpeedForFallDamage; };
+
+	float GetMinLandBounceSpeed() const { return MinLandBounceSpeed; }
 
 	/** Handles stafing movement, left and right */
 	UFUNCTION()

@@ -210,7 +210,7 @@ private:
 	/** Plays sound effect according to movement and surface */
 	void PlayMoveSound(float DeltaTime);
 
-	UPBMoveStepSound* GetMoveStepSoundBySurface(EPhysicalSurface SurfaceType) const;
+	class UPBMoveStepSound* GetMoveStepSoundBySurface(EPhysicalSurface SurfaceType) const;
 
 
 	virtual void PlayJumpSound(const FHitResult& Hit, bool bJumped);
