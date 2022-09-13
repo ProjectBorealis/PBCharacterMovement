@@ -130,12 +130,6 @@ UPBPlayerMovement::UPBPlayerMovement()
 	GravityScale = DesiredGravity / UPhysicsSettings::Get()->DefaultGravityZ;
 	// Make sure ramp movement in correct
 	bMaintainHorizontalGroundVelocity = true;
-
-	// Fall Damage Initializations
-	// PLAYER_MAX_SAFE_FALL_SPEED
-	MinSpeedForFallDamage = 1002.9825f;
-	// PLAYER_MIN_BOUNCE_SPEED
-	MinLandBounceSpeed = 329.565f;
 }
 
 void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -837,7 +831,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	}
 	else
 	{
-		constexpr float JumpVelocity = HU_TO_UU(140.0f);
+		constexpr float JumpVelocity = 266.7f;
 		const bool bPlayerControlsMovedVertically = bOnLadder || Velocity.Z > JumpVelocity || Velocity.Z <= 0.0f;
 		SurfaceFriction = bPlayerControlsMovedVertically ? 1.0f : 0.25f;
 	}
@@ -1048,12 +1042,12 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 	const float FullCrouchDiff = OldUnscaledHalfHeight - GetCrouchedHalfHeight();
 	float CurrentUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
 	// Determine the crouching progress
-	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
+	const bool bInstantCrouch = FMath::IsNearlyZero(TargetTime);
 	float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - GetCrouchedHalfHeight()) / FullCrouchDiff;
 	// Determine how much we are progressing this tick
 	float TargetAlphaDiff = 1.0f;
 	float TargetAlpha = 1.0f;
-	if (!InstantCrouch)
+	if (!bInstantCrouch)
 	{
 		TargetAlphaDiff = DeltaTime / CrouchTime;
 		TargetAlpha = CurrentAlpha + TargetAlphaDiff;

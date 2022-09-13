@@ -33,6 +33,12 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	const float CrouchedHalfHeight = 68.58f / 2.0f;
 	CrouchedEyeHeight = 53.34f - CrouchedHalfHeight;
 
+	// Fall Damage Initializations
+	// PLAYER_MAX_SAFE_FALL_SPEED
+	MinSpeedForFallDamage = 1002.9825f;
+	// PLAYER_MIN_BOUNCE_SPEED
+	MinLandBounceSpeed = 329.565f;
+
 	// get pointer to movement component
 	MovementPtr = Cast<UPBPlayerMovement>(ACharacter::GetMovementComponent());
 }
