@@ -20,17 +20,14 @@ class PBCHARACTERMOVEMENT_API APBPlayerCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
+	void Tick(float DeltaTime) override;
 	virtual void ClearJumpInput(float DeltaTime) override;
+	void Jump() override
 	virtual void StopJumping() override;
 	virtual void OnJumped_Implementation() override;
 	virtual bool CanJumpInternal_Implementation() const override;
 
 	void RecalculateBaseEyeHeight() override;
-
-#if ENGINE_MAJOR_VERSION == 4
-	/** Calculates the crouched eye height based on movement component settings */
-	void RecalculateCrouchedEyeHeight();
-#endif
 
 	/* Triggered when player's movement mode has changed */
 	void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode) override;
@@ -78,6 +75,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Damage")
 	float MinSpeedForFallDamage;
 
+	// In HL2, the player has the Z component for applying momentum to the capsule capped
+	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Damage")
+	float CapDamageMomentumZ = 0.f;
+
 	/** Pointer to player movement component */
 	UPBPlayerMovement* MovementPtr;
 
@@ -86,11 +87,15 @@ private:
 
 	bool bWantsToWalk;
 
+	/** defer the jump stop for a frame (for early jumps) */
+	bool bDeferJumpStop;
+
 	virtual void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
 
 protected:
 	virtual void BeginPlay();
 
+	void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
 public:
 	APBPlayerCharacter(const FObjectInitializer& ObjectInitializer);
 

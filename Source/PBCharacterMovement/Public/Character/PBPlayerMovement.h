@@ -18,11 +18,6 @@
 #define MOVEMENT_DEFAULT_UNCROUCHTIME 0.2f
 #define MOVEMENT_DEFAULT_UNCROUCHJUMPTIME 0.8f
 
-// Testing surfing code
-#ifndef WIP_SURFING
-#define WIP_SURFING 0
-#endif
-
 class USoundCue;
 
 UCLASS()
@@ -144,10 +139,21 @@ public:
 
 	UPBPlayerMovement();
 
+	virtual void InitializeComponent() override;
+	void OnRegister() override;
+
 	// Overrides for Source-like movement
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
+	bool ShouldLimitAirControl(float DeltaTime, const FVector& FallAcceleration) const override;
+	FVector NewFallVelocity(const FVector& InitialVelocity, const FVector& Gravity, float DeltaTime) const override;
+
+	void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
+	void UpdateCharacterStateAfterMovement(float DeltaSeconds) override;
+
+	void UpdateSurfaceFriction(bool bIsSliding = false);
+	void UpdateCrouching(float DeltaTime, bool bOnlyUnCrouch = false);
 
 	// Overrides for crouch transitions
 	virtual void Crouch(bool bClientSimulation = false) override;
@@ -156,10 +162,6 @@ public:
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 
 #if ENGINE_MAJOR_VERSION == 4
-	/** Sets collision half-height when crouching and updates dependent computations */
-	UFUNCTION(BlueprintCallable)
-	void SetCrouchedHalfHeight(const float NewValue);
-
 	/** Returns the collision half-height when crouching (component scale is applied separately) */
 	UFUNCTION(BlueprintCallable)
 	float GetCrouchedHalfHeight() const;
@@ -183,6 +185,10 @@ public:
 	{
 		return Acceleration;
 	}
+
+	/** Is this player on a ladder? */
+	UFUNCTION(BlueprintCallable)
+	bool IsOnLadder() const;
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode);
 
@@ -221,8 +227,4 @@ private:
 
 	bool bHasDeferredMovementMode;
 	EMovementMode DeferredMovementMode;
-
-#if WIP_SURFING
-	void PreemptCollision(float DeltaTime, float SurfaceFriction);
-#endif
 };

@@ -1,4 +1,5 @@
 # PBCharacterMovement
+
 Project Borealis character movement component.
 
 Includes all your standard classic FPS movement from HL2:
@@ -12,14 +13,17 @@ Includes all your standard classic FPS movement from HL2:
 * Ramp sliding/trimping/collision boosting
 * Smooth crouching and uncrouching, and crouch jumping
 * Optional pogo jumping (automatic bunnyhopping)
-* WIP Surfing
+* Surfing
 
 More info in this blog post: https://www.projectborealis.com/movement.
 
 ## Binaries
 
-Binaries are compiled for `4.25`, and will work on Blueprint and C++ projects.
-If you are using a different version of Unreal Engine 4, you will need to recompile the plugin.
+Binaries are compiled for `4.25`, and will work on C++ projects.
+
+If you have a Blueprint project, you must upgrade to a C++ project, or else the game will fail to package.
+
+If you are using a different version of Unreal Engine, you will need to recompile the plugin.
 
 ## Redistribution note
 
