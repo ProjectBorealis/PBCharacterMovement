@@ -586,6 +586,11 @@ void UPBPlayerMovement::UpdateSurfaceFriction(bool bIsSliding)
 
 void UPBPlayerMovement::UpdateCrouching(float DeltaTime, bool bOnlyUncrouch)
 {
+	if (CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy)
+	{
+		return;
+	}
+
 	// Crouch transition but not in noclip
 	if (bIsInCrouchTransition && !bCheatFlying)
 	{
