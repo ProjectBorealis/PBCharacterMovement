@@ -95,6 +95,10 @@ protected:
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float WalkSpeed;
 
+	/** Speed on a ladder */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Ladder")
+	float LadderSpeed;
+
 	/** The minimum speed to scale up from for slope movement  */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float SpeedMultMin;
@@ -133,10 +137,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
 	uint32 bShowPos : 1;
 
-	/** Vertical move mode for no clip: 0 - add down move; 1 - nothing; 2 - add up move */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
-	int32 NoClipVerticalMoveMode;
-
 	UPBPlayerMovement();
 
 	virtual void InitializeComponent() override;
@@ -146,6 +146,7 @@ public:
 	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
+	void PhysFalling(float deltaTime, int32 Iterations);
 	bool ShouldLimitAirControl(float DeltaTime, const FVector& FallAcceleration) const override;
 	FVector NewFallVelocity(const FVector& InitialVelocity, const FVector& Gravity, float DeltaTime) const override;
 
@@ -160,12 +161,6 @@ public:
 	virtual void UnCrouch(bool bClientSimulation = false) override;
 	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
-
-#if ENGINE_MAJOR_VERSION == 4
-	/** Returns the collision half-height when crouching (component scale is applied separately) */
-	UFUNCTION(BlueprintCallable)
-	float GetCrouchedHalfHeight() const;
-#endif
 
 	// Jump overrides
 	bool CanAttemptJump() const override;
@@ -188,7 +183,10 @@ public:
 
 	/** Is this player on a ladder? */
 	UFUNCTION(BlueprintCallable)
-	bool IsOnLadder() const;
+	bool IsOnLadder() const
+	{
+		return bOnLadder;
+	}
 
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode);
 
@@ -224,6 +222,9 @@ private:
 	float DefaultStepHeight;
 	float DefaultWalkableFloorZ;
 	float SurfaceFriction;
+
+	/** The time that the player can remount on the ladder */
+	float OffLadderTicks = -1.0f;
 
 	bool bHasDeferredMovementMode;
 	EMovementMode DeferredMovementMode;

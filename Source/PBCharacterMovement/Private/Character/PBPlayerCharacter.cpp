@@ -65,7 +65,7 @@ void APBPlayerCharacter::Tick(float DeltaTime)
 	}
 }
 
-void APBCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
+void APBPlayerCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
 {
 	UDamageType const* const DmgTypeCDO = DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>();
 	if (GetCharacterMovement())
@@ -74,17 +74,18 @@ void APBCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& Da
 
 		if (IsValid(DamageCauser))
 		{
-			ImpulseDir = (GetActorLocation() - (DamageCauser->GetActorLocation() + FVector(0.0f, 0.0f, HU_TO_UU(-10.0f)))).GetSafeNormal();
+			ImpulseDir = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal();
 		}
 		else
 		{
-			ImpulseDir = DamageEvent.GetImpulse(DamageTaken, this, PawnInstigator).GetSafeNormal();
+			FHitResult HitInfo;
+			DamageEvent.GetBestHitInfo(this, DamageCauser, HitInfo, ImpulseDir);
 		}
 
-		const float SizeFactor = (FMath::Square(HU_TO_UU(32.0f)) * HU_TO_UU(72.0f)) / (FMath::Square(GetCapsuleComponent()->GetScaledCapsuleRadius() * 2.0f) * GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f);
+		const float SizeFactor = (60.96f * 60.96f * 137.16f) / (FMath::Square(GetCapsuleComponent()->GetScaledCapsuleRadius() * 2.0f) * GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f);
 
-		float Magnitude = HU_TO_UU(DamageTaken) * SizeFactor * 5.0f;
-		Magnitude = FMath::Min(Magnitude, HU_TO_UU(1000.0f));
+		float Magnitude = 1.905f * DamageTaken * SizeFactor * 5.0f;
+		Magnitude = FMath::Min(Magnitude, 1905.0f);
 
 		FVector Impulse = ImpulseDir * Magnitude;
 		bool const bMassIndependentImpulse = !DmgTypeCDO->bScaleMomentumByMass;
@@ -291,51 +292,19 @@ void APBPlayerCharacter::LookUp(bool bIsPure, float Rate)
 	AddControllerPitchInput(Rate);
 }
 
-void APBPlayerCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
-{
-	UDamageType const* const DmgTypeCDO = DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>();
-	if (GetCharacterMovement())
-	{
-		FHitResult HitInfo;
-		FVector ImpulseDir;
-		DamageEvent.GetBestHitInfo(this, DamageCauser, HitInfo, ImpulseDir);
-
-		FVector Impulse = ImpulseDir;
-		float SizeFactor = (60.96f * 60.96f * 137.16f) /
-						   (FMath::Square(GetCapsuleComponent()->GetScaledCapsuleRadius() * 2.0f) * GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * 2.0f);
-		Impulse *= DamageTaken * SizeFactor * 5.0f * 3.0f / 4.0f;
-		bool const bMassIndependentImpulse = !DmgTypeCDO->bScaleMomentumByMass;
-		FVector MassScaledImpulse = Impulse;
-		if (!bMassIndependentImpulse && GetCharacterMovement()->Mass > SMALL_NUMBER)
-		{
-			MassScaledImpulse = MassScaledImpulse / GetCharacterMovement()->Mass;
-		}
-		if (MassScaledImpulse.Z > 1238.25f)
-		{
-			Impulse.Z = 1238.25f;
-		}
-		if (MassScaledImpulse.SizeSquared2D() > 1714.5f * 1714.5f)
-		{
-			// Impulse = Impulse.GetClampedToMaxSize2D(1714.5f);
-		}
-
-		GetCharacterMovement()->AddImpulse(Impulse, bMassIndependentImpulse);
-	}
-}
-
 void APBPlayerCharacter::RecalculateBaseEyeHeight()
 {
 	const ACharacter* DefaultCharacter = GetClass()->GetDefaultObject<ACharacter>();
 	const float OldUnscaledHalfHeight = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float CrouchedHalfHeight = GetCharacterMovement()->GetCrouchedHalfHeight();
+	const float CrouchedHalfHeight = GetCharacterMovement()->CrouchedHalfHeight;
 	const float FullCrouchDiff = OldUnscaledHalfHeight - CrouchedHalfHeight;
 	const UCapsuleComponent* CharacterCapsule = GetCapsuleComponent();
 	const float CurrentUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
 	const float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - CrouchedHalfHeight) / FullCrouchDiff;
-	BaseEyeHeight = FMath::Lerp(DefaultCharacter->BaseEyeHeight, CrouchedEyeHeight, UPBUtilityLibrary::SimpleSpline(CurrentAlpha));
+	BaseEyeHeight = FMath::Lerp(DefaultCharacter->BaseEyeHeight, CrouchedEyeHeight, SimpleSpline(CurrentAlpha));
 }
 
 bool APBPlayerCharacter::CanCrouch() const
 {
-	return !GetCharacterMovement()->bCheatFlying && Super::CanCrouch() && !(MovementPtr->IsOnLadder() || MovementPtr->IsInForcedMove());
+	return !GetCharacterMovement()->bCheatFlying && Super::CanCrouch() && !MovementPtr->IsOnLadder();
 }

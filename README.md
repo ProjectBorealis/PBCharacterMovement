@@ -19,7 +19,7 @@ More info in this blog post: https://www.projectborealis.com/movement.
 
 ## Binaries
 
-Binaries are compiled for `4.25`, and will work on C++ projects.
+Binaries are compiled for `4.27`, and will work on C++ projects.
 
 If you have a Blueprint project, you must upgrade to a C++ project, or else the game will fail to package.
 

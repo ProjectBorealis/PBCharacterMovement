@@ -14,6 +14,12 @@ class USoundCue;
 class UPBMoveStepSound;
 class UPBPlayerMovement;
 
+inline float SimpleSpline(float Value)
+{
+	const float ValueSquared = Value * Value;
+	return (3.0f * ValueSquared - 2.0f * ValueSquared * Value);
+}
+
 UCLASS(config = Game)
 class PBCHARACTERMOVEMENT_API APBPlayerCharacter : public ACharacter
 {
@@ -22,7 +28,7 @@ class PBCHARACTERMOVEMENT_API APBPlayerCharacter : public ACharacter
 public:
 	void Tick(float DeltaTime) override;
 	virtual void ClearJumpInput(float DeltaTime) override;
-	void Jump() override
+	void Jump() override;
 	virtual void StopJumping() override;
 	virtual void OnJumped_Implementation() override;
 	virtual bool CanJumpInternal_Implementation() const override;
@@ -94,8 +100,6 @@ private:
 
 protected:
 	virtual void BeginPlay();
-
-	void ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser) override;
 public:
 	APBPlayerCharacter(const FObjectInitializer& ObjectInitializer);
 

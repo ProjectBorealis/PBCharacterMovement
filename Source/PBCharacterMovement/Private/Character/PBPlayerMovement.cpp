@@ -21,7 +21,7 @@ DECLARE_CYCLE_STAT(TEXT("Char StepUp"), STAT_CharStepUp, STATGROUP_Character);
 DECLARE_CYCLE_STAT(TEXT("Char PhysFalling"), STAT_CharPhysFalling, STATGROUP_Character);
 
 // MAGIC NUMBERS
-constexpr float JumpVelocity = HU_TO_UU(140.0f);
+constexpr float JumpVelocity = 266.7f;
 const float MAX_STEP_SIDE_Z = 0.08f;			 // maximum z value for the normal on the vertical side of steps
 const float VERTICAL_SLOPE_NORMAL_Z = 0.001f;	 // Slope is vertical if Abs(Normal.Z) <= this threshold. Accounts for precision problems that sometimes angle
 												 // normals slightly off horizontal for vertical surface.
@@ -98,8 +98,6 @@ UPBPlayerMovement::UPBPlayerMovement()
 	UncrouchTime = MOVEMENT_DEFAULT_UNCROUCHTIME;
 	CrouchJumpTime = MOVEMENT_DEFAULT_CROUCHJUMPTIME;
 	UncrouchJumpTime = MOVEMENT_DEFAULT_UNCROUCHJUMPTIME;
-	// Noclip
-	NoClipVerticalMoveMode = 0;
 	// Slope angle is 45.57 degrees
 	SetWalkableFloorZ(0.7f);
 	DefaultWalkableFloorZ = GetWalkableFloorZ();
@@ -400,14 +398,6 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	{
 		bJumped = true;
 	}
-	else if (PreviousMovementMode == MOVE_Falling && MovementMode == MOVE_Walking)
-	{
-		if (bDeferCrouchSlideToLand)
-		{
-			bDeferCrouchSlideToLand = false;
-			StartCrouchSlide();
-		}
-	}
 
 	PlayJumpSound(CurrentFloor.HitResult, bJumped);
 
@@ -571,8 +561,6 @@ void UPBPlayerMovement::UpdateCrouching(float DeltaTime, bool bOnlyUncrouch)
 		// If the player wants to uncrouch, or we have to uncrouch after movement
 		if ((!bOnlyUncrouch && !bWantsToCrouch) || (bOnlyUncrouch && !CanCrouchInCurrentState()))
 		{
-			// and the player is not locked in a fully crouched position, we uncrouch
-			if (!(bLockInCrouch && CharacterOwner->bIsCrouched))
 			{
 				if (IsWalking())
 				{
@@ -917,7 +905,7 @@ void UPBPlayerMovement::PhysFalling(float deltaTime, int32 Iterations)
 		Velocity = NewFallVelocity(Velocity, Gravity, GravityTime);
 
 		// See if we need to sub-step to exactly reach the apex. This is important for avoiding "cutting off the top" of the trajectory as framerate varies.
-		if (CharacterMovementCVars::ForceJumpPeakSubstep && OldVelocity.Z > 0.f && Velocity.Z <= 0.f && NumJumpApexAttempts < MaxJumpApexAttemptsPerSimulation)
+		if (OldVelocity.Z > 0.f && Velocity.Z <= 0.f && NumJumpApexAttempts < MaxJumpApexAttemptsPerSimulation)
 		{
 			const FVector DerivedAccel = (Velocity - OldVelocity) / timeTick;
 			if (!FMath::IsNearlyZero(DerivedAccel.Z))
@@ -1130,7 +1118,7 @@ void UPBPlayerMovement::PhysFalling(float deltaTime, int32 Iterations)
 							ProcessLanded(Hit, remainingTime, Iterations);
 							return;
 						}
-						else if (GetPerchRadiusThreshold() > 0.f && Hit.Time == 1.f && OldHitImpactNormal.Z >= WalkableFloorZ)
+						else if (GetPerchRadiusThreshold() > 0.f && Hit.Time == 1.f && OldHitImpactNormal.Z >= GetWalkableFloorZ())
 						{
 							// We might be in a virtual 'ditch' within our perch radius. This is rare.
 							const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
@@ -1163,7 +1151,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	// UE4-COPY: void UCharacterMovementComponent::CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration)
 
 	// Do not update velocity when using root motion or when SimulatedProxy and not simulating root motion - SimulatedProxy are repped their Velocity
-	if (!HasValidData() || HasAnimRootMotion() || IsInForcedMove() || DeltaTime < MIN_TICK_TIME || (CharacterOwner && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy && !bWasSimulatingRootMotion))
+	if (!HasValidData() || HasAnimRootMotion() || DeltaTime < MIN_TICK_TIME || (CharacterOwner && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy && !bWasSimulatingRootMotion))
 	{
 		return;
 	}
@@ -1315,7 +1303,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 		// Scale step/ramp height down the faster we go
 		float Speed = FMath::Sqrt(SpeedSq);
 		float SpeedScale = (Speed - SpeedMultMin) / (SpeedMultMax - SpeedMultMin);
-		float SpeedMultiplier = UPBUtilityLibrary::Clamp01(SpeedScale);
+		float SpeedMultiplier = FMath::Clamp(SpeedScale, 0.0f, 1.0f);
 		SpeedMultiplier *= SpeedMultiplier;
 		if (!IsFalling())
 		{
@@ -1334,13 +1322,6 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 	}
 #endif
 }
-
-#if ENGINE_MAJOR_VERSION == 4
-float UPBPlayerMovement::GetCrouchedHalfHeight() const
-{ 
-	return CrouchedHalfHeight; 
-}
-#endif
 
 void UPBPlayerMovement::Crouch(bool bClientSimulation)
 {
@@ -1365,7 +1346,7 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 
 	// See if collision is already at desired size.
 	UCapsuleComponent* CharacterCapsule = CharacterOwner->GetCapsuleComponent();
-	if (FMath::IsNearlyEqual(CharacterCapsule->GetUnscaledCapsuleHalfHeight(), GetCrouchedHalfHeight()))
+	if (FMath::IsNearlyEqual(CharacterCapsule->GetUnscaledCapsuleHalfHeight(), CrouchedHalfHeight))
 	{
 		if (!bClientSimulation)
 		{
@@ -1389,11 +1370,11 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 	const float ComponentScale = CharacterCapsule->GetShapeScale();
 	const float OldUnscaledHalfHeight = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	const float OldUnscaledRadius = CharacterCapsule->GetUnscaledCapsuleRadius();
-	const float FullCrouchDiff = OldUnscaledHalfHeight - GetCrouchedHalfHeight();
+	const float FullCrouchDiff = OldUnscaledHalfHeight - CrouchedHalfHeight;
 	const float CurrentUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
 	// Determine the crouching progress
 	const bool bInstantCrouch = FMath::IsNearlyZero(TargetTime);
-	const float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - GetCrouchedHalfHeight()) / FullCrouchDiff;
+	const float CurrentAlpha = 1.0f - (CurrentUnscaledHalfHeight - CrouchedHalfHeight) / FullCrouchDiff;
 	// Determine how much we are progressing this tick
 	float TargetAlphaDiff = 1.0f;
 	float TargetAlpha = 1.0f;
@@ -1492,7 +1473,7 @@ void UPBPlayerMovement::DoUnCrouchResize(float TargetTime, float DeltaTime, bool
 	const float ComponentScale = CharacterCapsule->GetShapeScale();
 	const float OldUnscaledHalfHeight = CharacterCapsule->GetUnscaledCapsuleHalfHeight();
 	const float UncrouchedHeight = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float FullCrouchDiff = UncrouchedHeight - GetCrouchedHalfHeight();
+	const float FullCrouchDiff = UncrouchedHeight - CrouchedHalfHeight;
 	// Determine the crouching progress
 	const bool InstantCrouch = FMath::IsNearlyZero(TargetTime);
 	float CurrentAlpha = 1.0f - (UncrouchedHeight - OldUnscaledHalfHeight) / FullCrouchDiff;
