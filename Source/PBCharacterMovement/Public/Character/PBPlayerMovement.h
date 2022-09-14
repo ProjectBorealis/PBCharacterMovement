@@ -175,6 +175,8 @@ public:
 	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;
 	bool ShouldCheckForValidLandingSpot(float DeltaTime, const FVector& Delta, const FHitResult& Hit) const override;
 
+	void TraceCharacterFloor(FHitResult& OutHit);
+
 	// Acceleration
 	FORCEINLINE FVector GetAcceleration() const
 	{

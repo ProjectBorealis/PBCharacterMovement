@@ -386,6 +386,33 @@ bool UPBPlayerMovement::IsValidLandingSpot(const FVector& CapsuleLocation, const
 	return true;
 }
 
+void UPBPlayerMovement::TraceCharacterFloor(FHitResult& OutHit)
+{
+	FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CharacterFloorTrace), false, CharacterOwner);
+	FCollisionResponseParams ResponseParam;
+	InitCollisionParams(CapsuleParams, ResponseParam);
+	// must trace complex to get mesh phys materials
+	CapsuleParams.bTraceComplex = true;
+	// must get materials
+	CapsuleParams.bReturnPhysicalMaterial = true;
+
+	const FCollisionShape StandingCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_None);
+	const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+	const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
+	FVector StandingLocation = PawnLocation;
+	StandingLocation.Z -= MAX_FLOOR_DIST * 10.0f;
+	GetWorld()->SweepSingleByChannel(
+		OutHit,
+		PawnLocation,
+		StandingLocation,
+		FQuat::Identity,
+		CollisionChannel,
+		StandingCapsuleShape,
+		CapsuleParams,
+		ResponseParam
+	);
+}
+
 void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
 	// Reset step side if we are changing modes
@@ -399,7 +426,9 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 		bJumped = true;
 	}
 
-	PlayJumpSound(CurrentFloor.HitResult, bJumped);
+	FHitResult Hit;
+	TraceCharacterFloor(Hit);
+	PlayJumpSound(Hit, bJumped);
 
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 }
@@ -537,7 +566,9 @@ void UPBPlayerMovement::UpdateSurfaceFriction(bool bIsSliding)
 {
 	if (!IsFalling() && CurrentFloor.IsWalkableFloor())
 	{
-		SurfaceFriction = GetFrictionFromHit(CurrentFloor.HitResult);
+		FHitResult Hit;
+		TraceCharacterFloor(Hit);
+		SurfaceFriction = GetFrictionFromHit(Hit);
 	}
 	else
 	{
@@ -666,7 +697,8 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 	else
 	{
 		MoveSoundTime = bSprinting ? 300.0f : 400.0f;
-		const FHitResult Hit = CurrentFloor.HitResult;
+		FHitResult Hit;
+		TraceCharacterFloor(Hit);
 
 		if (Hit.PhysMaterial.IsValid())
 		{

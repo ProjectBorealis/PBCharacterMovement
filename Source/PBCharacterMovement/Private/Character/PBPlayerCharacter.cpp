@@ -21,7 +21,6 @@ APBPlayerCharacter::APBPlayerCharacter(const FObjectInitializer& ObjectInitializ
 	GetCapsuleComponent()->InitCapsuleSize(30.48f, 68.58f);
 	// Set collision settings. We are the invisible player with no 3rd person mesh.
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
-	GetCapsuleComponent()->bReturnMaterialOnMove = true;
 
 	// set our turn rates for input
 	BaseTurnRate = 45.0f;
