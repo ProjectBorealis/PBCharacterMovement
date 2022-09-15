@@ -42,4 +42,4 @@ Our ladder movement code and sprinting speed logic is game specific and is not p
 
 You may also want to use HL2 gravity settings. Go to Settings > Project Settings > Engine > Physics > Constants > Default Gravity Z and set it to `-1143`.
 
-Additionally, your default physics material should have a friction of `0.8` and restitution of `0.25` if you want HL2 defaults.
+Additionally, your default physics material should have a friction of `0.8` and restitution of `0.25` if you want Source defaults.
