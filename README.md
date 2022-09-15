@@ -5,15 +5,16 @@ Project Borealis character movement component.
 Includes all your standard classic FPS movement from HL2:
 
 * Strafe bunnyhopping
-* Forward bunnyhopping
 * Accelerated back hopping (and forward and back hopping)
 * Strafe boosting
 * Circle strafing
-* Wall strafing
-* Ramp sliding/trimping/collision boosting
-* Smooth crouching and uncrouching, and crouch jumping
-* Optional pogo jumping (automatic bunnyhopping)
 * Surfing
+* Ramp sliding/trimping/collision boosting
+* Wall strafing
+* Smooth crouching and uncrouching
+* Crouch jumping
+* Optional pogo jumping (automatic bunnyhopping): `move.Pogo` cvar
+* Optional forward bunnyhopping: `move.Bunnyhopping` cvar
 
 More info in this blog post: https://www.projectborealis.com/movement.
 
