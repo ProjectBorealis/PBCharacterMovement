@@ -1,6 +1,12 @@
 // Copyright 2017-2019 Project Borealis
 
 #include "Character/PBPlayerCharacter.h"
+	
+#include "Launch/Resources/Version.h"
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1
+#include "Engine/DamageEvents.h"
+#endif
 
 #include "Components/CapsuleComponent.h"
 #include "HAL/IConsoleManager.h"
@@ -8,6 +14,8 @@
 #include "Character/PBPlayerMovement.h"
 
 static TAutoConsoleVariable<int32> CVarAutoBHop(TEXT("move.Pogo"), 1, TEXT("If holding spacebar should make the player jump whenever possible.\n"), ECVF_Default);
+
+static TAutoConsoleVariable<int32> CVarJumpBoost(TEXT("move.JumpBoost"), 1, TEXT("If the player should boost in a movement direction while jumping.\n0 - disables jump boosting entirely\n1 - boosts in the direction of input, even when moving in another direction\n2 - boosts in the direction of input when moving in the same direction\n"), ECVF_Default);
 
 static TAutoConsoleVariable<int32> CVarBunnyhop(TEXT("move.Bunnyhopping"), 0, TEXT("Enable normal bunnyhopping.\n"), ECVF_Default);
 
@@ -159,17 +167,24 @@ void APBPlayerCharacter::StopJumping()
 
 void APBPlayerCharacter::OnJumped_Implementation()
 {
+	const int32 JumpBoost = CVarJumpBoost->GetInt();
 	if (MovementPtr->IsOnLadder())
 	{
 		return;
 	}
 
-	if (GetWorld()->GetTimeSeconds() >= LastJumpBoostTime + MaxJumpTime)
+	if (GetWorld()->GetTimeSeconds() >= LastJumpBoostTime + MaxJumpTime && JumpBoost)
 	{
 		LastJumpBoostTime = GetWorld()->GetTimeSeconds();
 		// Boost forward speed on jump
 		FVector Facing = GetActorForwardVector();
-		FVector Input = MovementPtr->GetLastInputVector().GetClampedToMaxSize2D(1.0f) * MovementPtr->GetMaxAcceleration();
+		// Use input direction
+		FVector Input = GetCharacterMovement()->GetCurrentAcceleration();
+		if (JumpBoost != 1)
+		{
+			// Only boost input in the direction of current movement axis (prevents ABH).
+			Input *= FMath::Max(Input.GetSafeNormal2D() | GetCharacterMovement()->Velocity.GetSafeNormal2D(), 0.0f);
+		}
 		float ForwardSpeed = Input | Facing;
 		// Adjust how much the boost is
 		float SpeedBoostPerc = bIsSprinting || bIsCrouched ? 0.1f : 0.5f;
