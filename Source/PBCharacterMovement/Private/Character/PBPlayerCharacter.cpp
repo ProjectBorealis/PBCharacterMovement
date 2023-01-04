@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Project Borealis
+// Copyright Project Borealis
 
 #include "Character/PBPlayerCharacter.h"
 	
@@ -233,6 +233,33 @@ void APBPlayerCharacter::ToggleNoClip()
 {
 	MovementPtr->ToggleNoClip();
 }
+
+// Sample for multiplayer games with a Mesh3P with crouch support
+#if 0
+void APBPlayerCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	const APBPlayerCharacter* DefaultChar = GetDefault<APBPlayerCharacter>(GetClass());
+	if (Mesh3P && DefaultChar->Mesh3P)
+	{
+		FVector MeshRelativeLocation = Mesh3P->GetRelativeLocation();
+		MeshRelativeLocation.Z = DefaultChar->Mesh3P->GetRelativeLocation().Z - ScaledHalfHeightAdjust;
+		Mesh3P->SetRelativeLocation(MeshRelativeLocation);
+	}
+}
+
+void APBPlayerCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	const APBPlayerCharacter* DefaultChar = GetDefault<APBPlayerCharacter>(GetClass());
+	if (Mesh3P && DefaultChar->Mesh3P)
+	{
+		FVector MeshRelativeLocation = Mesh3P->GetRelativeLocation();
+		MeshRelativeLocation.Z = DefaultChar->Mesh3P->GetRelativeLocation().Z + ScaledHalfHeightAdjust;
+		Mesh3P->SetRelativeLocation(MeshRelativeLocation);
+	}
+}
+#endif
 
 bool APBPlayerCharacter::CanJumpInternal_Implementation() const
 {
