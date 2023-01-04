@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Project Borealis
+// Copyright Project Borealis
 
 #include "Character/PBPlayerMovement.h"
 
@@ -178,7 +178,7 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("vel: %f"), Velocity.Size()));
 	}
 
-	if (RollAngle != 0 && RollSpeed != 0)
+	if (RollAngle != 0 && RollSpeed != 0 && GetPBCharacter()->GetController())
 	{
 		FRotator ControlRotation = PBCharacter->GetController()->GetControlRotation();
 		ControlRotation.Roll = GetCameraRoll();
@@ -248,7 +248,7 @@ FVector UPBPlayerMovement::HandleSlopeBoosting(const FVector& SlideResult, const
 	const float WallAngle = FMath::Abs(Hit.ImpactNormal.Z);
 	FVector ImpactNormal;
 	// If too extreme, use the more stable hit normal
-	if (WallAngle <= 0.001f || WallAngle == 1.0f)
+	if (WallAngle <= VERTICAL_SLOPE_NORMAL_Z || WallAngle == 1.0f)
 	{
 		ImpactNormal = Normal;
 	}
@@ -674,7 +674,7 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 	}
 	else
 	{
-		RunSpeedThreshold = MaxWalkSpeed;
+		RunSpeedThreshold = WalkSpeed;
 		SprintSpeedThreshold = SprintSpeed;
 	}
 
@@ -1452,8 +1452,9 @@ void UPBPlayerMovement::DoCrouchResize(float TargetTime, float DeltaTime, bool b
 
 	bForceNextFloorCheck = true;
 
+	const float MeshAdjust = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - ClampedCrouchedHalfHeight;
 	AdjustProxyCapsuleSize();
-	CharacterOwner->OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	CharacterOwner->OnStartCrouch(MeshAdjust, MeshAdjust * ComponentScale);
 
 	// Don't smooth this change in mesh position
 	if ((bClientSimulation && CharacterOwner->GetLocalRole() == ROLE_SimulatedProxy) || (IsNetMode(NM_ListenServer) && CharacterOwner->GetRemoteRole() == ROLE_AutonomousProxy))
@@ -1662,13 +1663,13 @@ void UPBPlayerMovement::DoUnCrouchResize(float TargetTime, float DeltaTime, bool
 		bShrinkProxyCapsule = true;
 	}
 
-	// Now call SetCapsuleSize() to cause touch/untouch events and actually grow
-	// the capsule
+	// Now call SetCapsuleSize() to cause touch/untouch events and actually grow the capsule
 	CharacterCapsule->SetCapsuleSize(DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleRadius(), OldUnscaledHalfHeight + HalfHeightAdjust, true);
 
-	const float MeshAdjust = ScaledHalfHeightAdjust;
+	// OnEndCrouch takes the change from the Default size, not the current one (though they are usually the same).
+	const float MeshAdjust = DefaultCharacter->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - OldUnscaledHalfHeight + HalfHeightAdjust;
 	AdjustProxyCapsuleSize();
-	CharacterOwner->OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	CharacterOwner->OnEndCrouch(MeshAdjust, MeshAdjust * ComponentScale);
 	bCrouchFrameTolerated = false;
 
 	// Don't smooth this change in mesh position
@@ -1677,7 +1678,7 @@ void UPBPlayerMovement::DoUnCrouchResize(float TargetTime, float DeltaTime, bool
 		FNetworkPredictionData_Client_Character* ClientData = GetPredictionData_Client_Character();
 		if (ClientData)
 		{
-			ClientData->MeshTranslationOffset += FVector(0.0f, 0.0f, MeshAdjust);
+			ClientData->MeshTranslationOffset += FVector(0.0f, 0.0f, ScaledHalfHeightAdjust);
 			ClientData->OriginalMeshTranslationOffset = ClientData->MeshTranslationOffset;
 		}
 	}
