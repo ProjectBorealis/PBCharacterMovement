@@ -178,7 +178,7 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("vel: %f"), Velocity.Size()));
 	}
 
-	if (RollAngle != 0 && RollSpeed != 0 && GetPBCharacter()->GetController())
+	if (RollAngle != 0 && RollSpeed != 0 && PBCharacter->GetController())
 	{
 		FRotator ControlRotation = PBCharacter->GetController()->GetControlRotation();
 		ControlRotation.Roll = GetCameraRoll();
