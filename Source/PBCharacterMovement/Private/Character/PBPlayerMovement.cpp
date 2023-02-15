@@ -199,7 +199,13 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			BrakingWindowTimeElapsed = 0;
 		}
 		
-	} else bBrakingWindowElapsed = false; // don't brake in the air lol
+	}
+	else
+	{
+		bBrakingWindowElapsed = false; // don't brake in the air lol
+		BrakingWindowTimeElapsed = 0;
+		// make sure this is cleared so the window doesn't shrink on subsequent bhops until it expires.
+	}
 	
 	bCrouchFrameTolerated = IsCrouching();
 }
