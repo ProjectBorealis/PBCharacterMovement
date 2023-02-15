@@ -189,8 +189,6 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 	
 	if (IsMovingOnGround())
 	{
-		/** Fractions of a millisecond is such an infinitesimally small amount of time
-		 * that we can truncate it out for the sake of simplicity. */
 		if (!bBrakingWindowElapsed) BrakingWindowTimeElapsed += DeltaTime * 1000;
 
 		if (BrakingWindowTimeElapsed >= BrakingWindow)
@@ -198,7 +196,6 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 			bBrakingWindowElapsed = true;
 			BrakingWindowTimeElapsed = 0;
 		}
-		
 	}
 	else
 	{
