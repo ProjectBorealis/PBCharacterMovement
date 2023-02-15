@@ -89,7 +89,9 @@ UPBPlayerMovement::UPBPlayerMovement()
 	SpeedMultMin = SprintSpeed * 1.7f;
 	SpeedMultMax = SprintSpeed * 2.5f;
 	// Start out braking
-	bBrakingFrameTolerated = true;
+	bBrakingWindowElapsed = true;
+	BrakingWindowTimeElapsed = 0;
+	BrakingWindow = 83;
 	// Crouching
 	CrouchedHalfHeight = 34.29f;
 	MaxWalkSpeedCrouched = RunSpeed * 0.33333333f;
@@ -184,8 +186,19 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		ControlRotation.Roll = GetCameraRoll();
 		PBCharacter->GetController()->SetControlRotation(ControlRotation);
 	}
+	
+	if (IsMovingOnGround())
+	{
+		if (!bBrakingWindowElapsed) BrakingWindowTimeElapsed += DeltaTime * 1000;
 
-	bBrakingFrameTolerated = IsMovingOnGround();
+		if (BrakingWindowTimeElapsed >= BrakingWindow)
+		{
+			bBrakingWindowElapsed = true;
+			BrakingWindowTimeElapsed = 0;
+		}
+		
+	} else bBrakingWindowElapsed = false; // don't brake in the air lol
+	
 	bCrouchFrameTolerated = IsCrouching();
 }
 
@@ -680,7 +693,7 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 
 	// Only play sounds if we are moving fast enough on the ground or on a
 	// ladder
-	const bool bPlaySound = (bBrakingFrameTolerated || bOnLadder) && Speed >= RunSpeedThreshold * RunSpeedThreshold;
+	const bool bPlaySound = (bBrakingWindowElapsed || bOnLadder) && Speed >= RunSpeedThreshold * RunSpeedThreshold;
 
 	if (!bPlaySound)
 	{
@@ -1237,7 +1250,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 
 	// Apply braking or deceleration
 	const bool bZeroAcceleration = Acceleration.IsNearlyZero();
-	const bool bIsGroundMove = IsMovingOnGround() && bBrakingFrameTolerated;
+	const bool bIsGroundMove = IsMovingOnGround() && bBrakingWindowElapsed;
 
 	// Apply friction
 	if (bIsGroundMove)

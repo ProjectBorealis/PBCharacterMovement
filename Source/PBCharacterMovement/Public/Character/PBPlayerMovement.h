@@ -68,8 +68,15 @@ protected:
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite)
 	float MinStepHeight;
 
-	/** If the player has already landed for a frame, and breaking may be applied. */
-	bool bBrakingFrameTolerated;
+	/** Time (in millis) the player has to rejump without applying friction. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
+	int BrakingWindow;
+
+	/* Progress checked against the Braking Window, incremented in millis. */
+	int BrakingWindowTimeElapsed;
+
+	/** If the player has been on the ground past the Braking Window, start braking. */
+	bool bBrakingWindowElapsed;
 
 	/** Wait a frame before crouch speed. */
 	bool bCrouchFrameTolerated = false;
@@ -202,7 +209,7 @@ public:
 
 	bool IsBrakingFrameTolerated() const
 	{
-		return bBrakingFrameTolerated;
+		return bBrakingWindowElapsed;
 	}
 
 	bool IsInCrouch() const
