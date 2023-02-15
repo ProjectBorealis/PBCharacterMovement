@@ -207,7 +207,7 @@ public:
 	/** Toggle no clip */
 	void ToggleNoClip();
 
-	bool IsBrakingFrameTolerated() const
+	bool IsBrakingWindowTolerated() const
 	{
 		return bBrakingWindowElapsed;
 	}
