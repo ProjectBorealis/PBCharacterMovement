@@ -69,7 +69,7 @@ protected:
 	float MinStepHeight;
 
 	/** Time (in millis) the player has to rejump without applying friction. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling", meta=(DisplayName="Rejump Window", ForceUnits="ms"))
 	int BrakingWindow;
 
 	/* Progress checked against the Braking Window, incremented in millis. */

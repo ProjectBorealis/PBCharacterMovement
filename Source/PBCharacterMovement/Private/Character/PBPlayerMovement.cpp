@@ -91,7 +91,7 @@ UPBPlayerMovement::UPBPlayerMovement()
 	// Start out braking
 	bBrakingWindowElapsed = true;
 	BrakingWindowTimeElapsed = 0;
-	BrakingWindow = 16;
+	BrakingWindow = 15;
 	// Crouching
 	CrouchedHalfHeight = 34.29f;
 	MaxWalkSpeedCrouched = RunSpeed * 0.33333333f;
