@@ -161,6 +161,8 @@ public:
 	virtual void UnCrouch(bool bClientSimulation = false) override;
 	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
+	
+	bool MoveUpdatedComponentImpl(const FVector& Delta, const FQuat& NewRotation, bool bSweep, FHitResult* OutHit = nullptr, ETeleportType Teleport = ETeleportType::None) override;
 
 	// Jump overrides
 	bool CanAttemptJump() const override;
