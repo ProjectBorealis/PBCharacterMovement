@@ -1684,6 +1684,40 @@ void UPBPlayerMovement::DoUnCrouchResize(float TargetTime, float DeltaTime, bool
 	}
 }
 
+bool UPBPlayerMovement::MoveUpdatedComponentImpl(const FVector& Delta, const FQuat& NewRotation, bool bSweep, FHitResult* OutHit, ETeleportType Teleport)
+{
+	FVector NewDelta = Delta;
+	if (bSweep && Teleport == ETeleportType::None && Delta != FVector::ZeroVector && IsFalling() && Delta.Z > 0.0f)
+	{
+		const float HorizontalMovement = Delta.SizeSquared2D();
+		if (HorizontalMovement > KINDA_SMALL_NUMBER)
+		{
+			float PawnRadius, PawnHalfHeight;
+			CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleSize(PawnRadius, PawnHalfHeight);
+			FVector LineTraceStart = UpdatedComponent->GetComponentLocation();
+			// Shrink our base height so we don't intersect any current floor, and find where we would end up if we moved
+			LineTraceStart.Z += -PawnHalfHeight + MAX_FLOOR_DIST + Delta.Z;
+			// Inflate our search radius so we can anticipate new surfaces
+			FVector DeltaDir = Delta.GetSafeNormal2D() * (PawnRadius + SWEEP_EDGE_REJECT_DISTANCE);
+			FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(CapsuleHemisphereTrace), false, CharacterOwner);
+			FCollisionResponseParams ResponseParam;
+			InitCollisionParams(QueryParams, ResponseParam);
+			const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+			FHitResult Hit(1.f);
+			const bool bBlockingHit = GetWorld()->LineTraceSingleByChannel(Hit, LineTraceStart, LineTraceStart + DeltaDir, CollisionChannel, QueryParams, ResponseParam);
+			if (bBlockingHit && FMath::Abs(Hit.ImpactNormal.Z) <= VERTICAL_SLOPE_NORMAL_Z)
+			{
+				// DrawDebugLine(GetWorld(), LineTraceStart, LineTraceStart + DeltaDir, FColor::Red, false, 10.0f, 0, 0.5f);
+				// UE_LOG(LogTemp, Log, TEXT("%f"), Hit.ImpactNormal.Z);
+				//  Blocked horizontally by box
+				NewDelta = Super::ComputeSlideVector(Delta, 1.0f, Hit.ImpactNormal, Hit);
+			}
+		}
+	}
+
+	return Super::MoveUpdatedComponentImpl(NewDelta, NewRotation, bSweep, OutHit, Teleport);
+}
+
 bool UPBPlayerMovement::CanAttemptJump() const
 {
 	bool bCanAttemptJump = IsJumpAllowed();
