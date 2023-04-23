@@ -193,7 +193,7 @@ public:
 	}
 
 	/** Is this player on a ladder? */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = Gameplay)
 	bool IsOnLadder() const
 	{
 		return bOnLadder;
