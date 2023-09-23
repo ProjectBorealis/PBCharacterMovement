@@ -1,8 +1,6 @@
 // Copyright Project Borealis
 
 #include "Character/PBPlayerCharacter.h"
-	
-#include "Launch/Resources/Version.h"
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1
 #include "Engine/DamageEvents.h"
@@ -11,6 +9,7 @@
 
 #include "Components/CapsuleComponent.h"
 #include "HAL/IConsoleManager.h"
+#include "Engine/World.h"
 
 #include "Character/PBPlayerMovement.h"
 
