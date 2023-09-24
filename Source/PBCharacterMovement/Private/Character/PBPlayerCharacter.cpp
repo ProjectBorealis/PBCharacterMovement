@@ -2,6 +2,8 @@
 
 #include "Character/PBPlayerCharacter.h"
 
+#include "Runtime/Launch/Resources/Version.h"
+
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 1
 #include "Engine/DamageEvents.h"
 #include "GameFramework/DamageType.h"
