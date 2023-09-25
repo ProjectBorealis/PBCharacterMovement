@@ -11,6 +11,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PhysicsEngine/PhysicsSettings.h"
 #include "Sound/SoundCue.h"
+#include "ProfilingDebugging/CsvProfiler.h"
 
 #include "Sound/PBMoveStepSound.h"
 #include "Character/PBPlayerCharacter.h"
