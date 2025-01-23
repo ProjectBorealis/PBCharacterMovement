@@ -34,8 +34,8 @@ Our ladder movement code and sprinting speed logic is game specific and is not p
 
 1. Paste the [PBCharacterMovement folder](https://github.com/ProjectBorealis/PBCharacterMovement/archive/master.zip) into your project's `Plugins/` folder.
 2. Open your Unreal Engine project.
-3. Add input action bindings for jump and crouch (Settings > Project Settings > Engine > Input). Add axis bindings for forward, right, look up and turn.
-4. Create a new player controller in Blueprint or C++. Here's a [simple Blueprint example](https://blueprintue.com/blueprint/l7vxktwk/).
+3. Add Enhanced Input actions and mappings for forward, right, look up, turn, jump, and crouch.
+4. Create a new player controller in Blueprint or C++. Here's a [simple Blueprint example](https://blueprintue.com/blueprint/l7vxktwk/). Please note this example binds to the legacy input system, but Enhanced Input should similarly bind to the same functions.
 5. Create a Blueprint child class of PBPlayerCharacter.
 6. Create a gamemode with Default Pawn set to your Blueprint character class, and Player Controller set to your player controller.
 7. Enjoy the movement!
