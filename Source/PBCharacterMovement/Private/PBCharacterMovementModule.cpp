@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Project Borealis. All rights reserved.
+// Copyright Project Borealis
 
 #include "PBCharacterMovementModule.h"
 

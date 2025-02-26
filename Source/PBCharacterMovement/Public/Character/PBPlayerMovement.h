@@ -1,24 +1,28 @@
-// Copyright 2017-2019 Project Borealis
+// Copyright Project Borealis
 
 #pragma once
 
-#include "CoreMinimal.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
 
-#include "Runtime/Launch/Resources/Version.h"
+#include "PBPlayerCharacter.h"
 
 #include "PBPlayerMovement.generated.h"
 
-#define LADDER_MOUNT_TIMEOUT 0.2f
+constexpr float LADDER_MOUNT_TIMEOUT = 0.2f;
 
 // Crouch Timings (in seconds)
-#define MOVEMENT_DEFAULT_CROUCHTIME 0.4f
-#define MOVEMENT_DEFAULT_CROUCHJUMPTIME 0.0f
-#define MOVEMENT_DEFAULT_UNCROUCHTIME 0.2f
-#define MOVEMENT_DEFAULT_UNCROUCHJUMPTIME 0.8f
+constexpr float MOVEMENT_DEFAULT_CROUCHTIME = 0.4f;
+constexpr float MOVEMENT_DEFAULT_CROUCHJUMPTIME = 0.0f;
+constexpr float MOVEMENT_DEFAULT_UNCROUCHTIME = 0.2f;
+constexpr float MOVEMENT_DEFAULT_UNCROUCHJUMPTIME = 0.8f;
+
+#ifndef USE_CROUCH_SLIDING
+#define USE_CROUCH_SLIDING 0
+#endif
 
 class USoundCue;
+
+constexpr float DesiredGravity = -1143.0f;
 
 UCLASS()
 class PBCHARACTERMOVEMENT_API UPBPlayerMovement : public UCharacterMovementComponent
@@ -30,20 +34,68 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay)
 	bool bOnLadder;
 
-	/** Milliseconds between step sounds */
-	float MoveSoundTime;
+	/** Should crouch slide? */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	bool bShouldCrouchSlide;
 
-	/** If we are stepping left, else, right */
-	bool StepSide;
+	/** If the player is currently crouch sliding */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Gameplay)
+	bool bCrouchSliding;
+
+	/** schedule a crouch slide to landing */
+	bool bDeferCrouchSlideToLand;
+
+	/** Time crouch sliding started */
+	float CrouchSlideStartTime;
+
+	/** How long a crouch slide boosts for */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float CrouchSlideBoostTime;
+
+	/** The minimum starting boost */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float MinCrouchSlideBoost;
+
+	/** The factor for determining the initial crouch slide boost up a slope */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float CrouchSlideBoostSlopeFactor;
+
+	/** How much to multiply initial velocity by when starting a crouch slide */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float CrouchSlideBoostMultiplier;
+
+	/** How much forward velocity player needs relative to sprint speed in order to start a crouch slide */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float CrouchSlideSpeedRequirementMultiplier;
+
+	/** The max velocity multiplier for acceleration in crouch sliding */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float MaxCrouchSlideVelocityBoost;
+
+	/** The min velocity multiplier for acceleration in crouch sliding */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float MinCrouchSlideVelocityBoost;
+
+	/** Time before being able to crouch slide again */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float CrouchSlideCooldown;
+
+	/** Enter crouch slide mode, giving the player a boost and adjusting camera effects */
+	void StartCrouchSlide();
+	/** If crouch sliding mode is turned on and valid in the current movement state and thus should occur */
+	bool ShouldCrouchSlide() const;
+
+	/** The time that the player can remount on the ladder */
+	float OffLadderTicks = -1.0f;
 
 	/** The multiplier for acceleration when on ground. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
 	float GroundAccelerationMultiplier;
 
 	/** The multiplier for acceleration when in air. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
 	float AirAccelerationMultiplier;
-	
+
 	/* The vector differential magnitude cap when in air. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
 	float AirSpeedCap;
@@ -64,31 +116,42 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
 	float UncrouchJumpTime;
 
+	/** Speed on a ladder */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Ladder")
+	float LadderSpeed;
+
+	/** Ladder timeout */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Ladder")
+	float LadderTimeout;
+
 	/** the minimum step height from moving fast */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite)
 	float MinStepHeight;
 
-	/** Time (in millis) the player has to rejump without applying friction. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling", meta=(DisplayName="Rejump Window", ForceUnits="ms"))
+	/** Time the player has before applying friction. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
 	float BrakingWindow;
 
-	/* Progress checked against the Braking Window, incremented in millis. */
+	/* Progress checked against the Braking Window */
 	float BrakingWindowTimeElapsed;
 
-	/** If the player has been on the ground past the Braking Window, start braking. */
-	bool bBrakingWindowElapsed;
+	/** If the player has already landed for a frame, and breaking may be applied. */
+	bool bBrakingFrameTolerated;
 
 	/** Wait a frame before crouch speed. */
-	bool bCrouchFrameTolerated = false;
+	bool bCrouchFrameTolerated;
 
 	/** If in the crouching transition */
-	bool bIsInCrouchTransition = false;
+	bool bIsInCrouchTransition;
 
-	/** If in the crouching transition */
-	bool bInCrouch;
+	/** If the player is currently locked in crouch state */
+	bool bLockInCrouch = false;
+
+	APBPlayerCharacter* GetPBCharacter() const { return PBPlayerCharacter; }
 
 	/** The PB player character */
-	class APBPlayerCharacter* PBCharacter;
+	UPROPERTY(Transient, DuplicateTransient)
+	TObjectPtr<APBPlayerCharacter> PBPlayerCharacter;
 
 	/** The target ground speed when running. */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
@@ -102,10 +165,6 @@ protected:
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float WalkSpeed;
 
-	/** Speed on a ladder */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Ladder")
-	float LadderSpeed;
-
 	/** The minimum speed to scale up from for slope movement  */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
 	float SpeedMultMin;
@@ -116,18 +175,18 @@ protected:
 
 	/** The maximum angle we can roll for camera adjust */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
-	float RollAngle = 0.0f;
+	float RollAngle;
 
 	/** Speed of rolling the camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
-	float RollSpeed = 0.0f;
+	float RollSpeed;
 
 	/** Speed of rolling the camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
 	float BounceMultiplier = 0.0f;
 
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
-	float AxisSpeedLimit = 6667.5f;
+	float AxisSpeedLimit;
 
 	/** Threshold relating to speed ratio and friction which causes us to catch air */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
@@ -139,6 +198,18 @@ protected:
 
 	bool bShouldPlayMoveSounds = true;
 
+	/** Milliseconds between step sounds */
+	float MoveSoundTime = 0.0f;
+	/** If we are stepping left, else, right */
+	bool StepSide = false;
+
+	/** Plays sound effect according to movement and surface */
+	virtual void PlayMoveSound(float DeltaTime);
+
+	virtual void PlayJumpSound(const FHitResult& Hit, bool bJumped);
+
+	UPBMoveStepSound* GetMoveStepSoundBySurface(EPhysicalSurface SurfaceType) const;
+
 public:
 	/** Print pos and vel (Source: cl_showpos) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement (General Settings)")
@@ -147,13 +218,12 @@ public:
 	UPBPlayerMovement();
 
 	virtual void InitializeComponent() override;
-	void OnRegister() override;
+	virtual void OnRegister() override;
 
 	// Overrides for Source-like movement
-	void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
-	void PhysFalling(float deltaTime, int32 Iterations);
 	bool ShouldLimitAirControl(float DeltaTime, const FVector& FallAcceleration) const override;
 	FVector NewFallVelocity(const FVector& InitialVelocity, const FVector& Gravity, float DeltaTime) const override;
 
@@ -168,12 +238,18 @@ public:
 	virtual void UnCrouch(bool bClientSimulation = false) override;
 	virtual void DoCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
 	virtual void DoUnCrouchResize(float TargetTime, float DeltaTime, bool bClientSimulation = false);
-	
+
 	bool MoveUpdatedComponentImpl(const FVector& Delta, const FQuat& NewRotation, bool bSweep, FHitResult* OutHit = nullptr, ETeleportType Teleport = ETeleportType::None) override;
 
 	// Jump overrides
 	bool CanAttemptJump() const override;
 	bool DoJump(bool bClientSimulation) override;
+
+	/** Exit crouch slide mode, and stop camera effects */
+	void StopCrouchSliding();
+
+	/** If the crouch lock should be toggled on or off, crouch lock locks the player in their crouch state */
+	void ToggleCrouchLock(bool bLock);
 
 	void TwoWallAdjust(FVector& OutDelta, const FHitResult& Hit, const FVector& OldHitNormal) const override;
 	float SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal, FHitResult& Hit, bool bHandleImpact = false) override;
@@ -181,61 +257,56 @@ public:
 	FVector HandleSlopeBoosting(const FVector& SlideResult, const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
 	bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
 	bool IsWithinEdgeTolerance(const FVector& CapsuleLocation, const FVector& TestImpactPoint, const float CapsuleRadius) const override;
-	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;
 	bool ShouldCheckForValidLandingSpot(float DeltaTime, const FVector& Delta, const FHitResult& Hit) const override;
+	void HandleImpact(const FHitResult& Hit, float TimeSlice = 0.0f, const FVector& MoveDelta = FVector::ZeroVector) override;
+	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;
 
 	void TraceCharacterFloor(FHitResult& OutHit);
 
 	// Acceleration
-	FORCEINLINE FVector GetAcceleration() const
-	{
-		return Acceleration;
-	}
+	FORCEINLINE FVector GetAcceleration() const { return Acceleration; }
 
-	/** Is this player on a ladder? */
-	UFUNCTION(BlueprintCallable, Category = Gameplay)
-	bool IsOnLadder() const
-	{
-		return bOnLadder;
-	}
+	// Crouch locked
+	FORCEINLINE bool GetCrouchLocked() const { return bLockInCrouch; }
 
-	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode);
+	float GetSprintSpeed() const { return SprintSpeed; }
+
+	void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
 	/** Do camera roll effect based on velocity */
 	float GetCameraRoll();
+
+	/** Is this player on a ladder? */
+	UFUNCTION(BlueprintCallable)
+	bool IsOnLadder() const;
+
+	/** Return the speed used to climb ladders */
+	float GetLadderClimbSpeed() const;
 
 	void SetNoClip(bool bNoClip);
 
 	/** Toggle no clip */
 	void ToggleNoClip();
 
-	bool IsBrakingWindowTolerated() const
-	{
-		return bBrakingWindowElapsed;
-	}
+	bool IsBrakingFrameTolerated() const { return bBrakingFrameTolerated; }
 
-	bool IsInCrouch() const
-	{
-		return bInCrouch;
-	}
+	bool IsInCrouchTransition() const { return bIsInCrouchTransition; }
+
+	bool IsCrouchSliding() const { return bCrouchSliding; }
+
+	void SetShouldPlayMoveSounds(bool bShouldPlay) { bShouldPlayMoveSounds = bShouldPlay; }
 
 	virtual float GetMaxSpeed() const override;
 
+	virtual void ApplyDownwardForce(float DeltaSeconds) override;
+
 private:
-	/** Plays sound effect according to movement and surface */
-	void PlayMoveSound(float DeltaTime);
-
-	class UPBMoveStepSound* GetMoveStepSoundBySurface(EPhysicalSurface SurfaceType) const;
-
-
-	virtual void PlayJumpSound(const FHitResult& Hit, bool bJumped);
-
 	float DefaultStepHeight;
 	float DefaultWalkableFloorZ;
 	float SurfaceFriction;
-
-	/** The time that the player can remount on the ladder */
-	float OffLadderTicks = -1.0f;
+	TWeakObjectPtr<UPrimitiveComponent> OldBase;
+	/** If we have done an initial landing */
+	bool bHasEverLanded = false;
 
 	bool bHasDeferredMovementMode;
 	EMovementMode DeferredMovementMode;

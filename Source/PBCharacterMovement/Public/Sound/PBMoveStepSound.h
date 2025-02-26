@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 
-#include "Engine/EngineTypes.h"
+#include "Chaos/ChaosEngineInterface.h"
 
 #include "PBMoveStepSound.generated.h"
 
 class USoundCue;
+
 /**
  *
  */
@@ -18,7 +19,7 @@ class PBCHARACTERMOVEMENT_API UPBMoveStepSound : public UObject
 	GENERATED_BODY()
 public:
 	UFUNCTION()
-	TEnumAsByte<enum EPhysicalSurface> GetSurfaceMaterial() const { return SurfaceMaterial; }
+	TEnumAsByte<EPhysicalSurface> GetSurfaceMaterial() const { return SurfaceMaterial; }
 
 	UFUNCTION()
 	TArray<USoundCue*> GetStepLeftSounds() const { return StepLeftSounds; }
