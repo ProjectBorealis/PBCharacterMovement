@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 301,
-	"VersionName": "3.0.1",
+	"Version": 302,
+	"VersionName": "3.0.2",
 	"FriendlyName": "Project Borealis Character Movement",
 	"Description": "Half-Life 2 style character movement in Unreal Engine.",
 	"Category": "Other",
