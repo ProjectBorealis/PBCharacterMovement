@@ -209,6 +209,16 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 		return;
 	}
 
+	if (bShowPos || CVarShowPos.GetValueOnGameThread() != 0)
+	{
+		const FVector Position = UpdatedComponent->GetComponentLocation();
+		const FRotator Rotation = CharacterOwner->GetControlRotation();
+		const float Speed = Velocity.Size();
+		GEngine->AddOnScreenDebugMessage(1, 1.0f, FColor::Green, FString::Printf(TEXT("pos: %.02f %.02f %.02f"), Position.X, Position.Y, Position.Z));
+		GEngine->AddOnScreenDebugMessage(2, 1.0f, FColor::Green, FString::Printf(TEXT("ang: %.02f %.02f %.02f"), Rotation.Pitch, Rotation.Yaw, Rotation.Roll));
+		GEngine->AddOnScreenDebugMessage(3, 1.0f, FColor::Green, FString::Printf(TEXT("vel:  %.02f"), Speed));
+	}
+
 	if (RollAngle != 0 && RollSpeed != 0 && GetPBCharacter()->GetController())
 	{
 		FRotator ControlRotation = GetPBCharacter()->GetController()->GetControlRotation();
@@ -403,6 +413,12 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 	bool bJumped = false;
 	bool bQueueJumpSound = false;
 
+	// We reset landed state if we switch to a disabled mode. Flying mode should be okay though.
+	if (MovementMode == MOVE_None)
+	{
+		bHasEverLanded = false;
+	}
+
 	if (PreviousMovementMode == MOVE_Walking && MovementMode == MOVE_Falling)
 	{
 		// If we were walking and now falling, we could be jumping.
@@ -428,19 +444,38 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 		bQueueJumpSound = false;
 	}
 
-	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+	// In some cases, we don't play a jump sound because it's either not queued, or we haven't ever landed.
+	// in BOTH cases, we still want to handle detecting the first land. because in some cases we're
+	// moving from move mode = NONE
+	bool bDidPlayJumpSound = false;
 
 	// If we are moving between falling/walking, and we meet conditions for playing a sound in our state.
 	if (bQueueJumpSound)
 	{
+		// If we're intentionally falling off of spawn, then we want to play the land sound
+		if (!bHasEverLanded)
+		{
+			if (GetOwner()->GetGameTimeSinceCreation() > 0.1f)
+			{
+				bHasEverLanded = true;
+			}
+		}
 		if (bHasEverLanded)
 		{
 			// If we have found an initial ground from when we did our initial player spawn, we can play a sound.
 			FHitResult Hit;
 			TraceCharacterFloor(Hit);
 			PlayJumpSound(Hit, bJumped);
+			bDidPlayJumpSound = true;
 		}
-		else if (MovementMode == MOVE_Walking && (GetMovementBase() || CurrentFloor.bBlockingHit))
+	}
+
+	// This needs to be here AFTER PlayJumpSound or else our velocity Z gets reset to 0 before we do land sound.
+	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+
+	if (!bDidPlayJumpSound)
+	{
+		if (MovementMode == MOVE_Walking && (GetMovementBase() || CurrentFloor.bBlockingHit))
 		{
 			// This happens in a couple of cases.
 			// First, on initial player spawn, we default to walking.
@@ -804,7 +839,7 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 		return;
 	}
 
-	const float Speed = Velocity.SizeSquared();
+	const float Speed = Velocity.SizeSquared2D();
 	float WalkSpeedThreshold;
 	float SprintSpeedThreshold;
 
@@ -1207,7 +1242,7 @@ void UPBPlayerMovement::CalcVelocity(float DeltaTime, float Friction, bool bFlui
 		// Scale step/ramp height down the faster we go
 		float Speed = FMath::Sqrt(SpeedSq);
 		float SpeedScale = (Speed - SpeedMultMin) / (SpeedMultMax - SpeedMultMin);
-		float SpeedMultiplier =FMath::Clamp(SpeedScale, 0.0f, 1.0f);
+		float SpeedMultiplier = FMath::Clamp(SpeedScale, 0.0f, 1.0f);
 		SpeedMultiplier *= SpeedMultiplier;
 		if (!IsFalling())
 		{

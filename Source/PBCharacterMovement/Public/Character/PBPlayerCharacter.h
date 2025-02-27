@@ -254,7 +254,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Sounds")
 	TMap<TEnumAsByte<EPhysicalSurface>, TSubclassOf<UPBMoveStepSound>> MoveStepSounds;
 
-		/** Minimum speed to play the camera shake for landing */
+	/** Minimum speed to play the camera shake for landing */
 	UPROPERTY(EditDefaultsOnly, meta = (AllowPrivateAccess = "true"), Category = "PB Player|Damage")
 	float MinLandBounceSpeed;
 
