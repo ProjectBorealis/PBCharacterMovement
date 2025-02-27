@@ -195,6 +195,8 @@ void UPBPlayerMovement::TickComponent(float DeltaTime, enum ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	PlayMoveSound(DeltaTime);
+
 	if (bHasDeferredMovementMode)
 	{
 		SetMovementMode(DeferredMovementMode);
