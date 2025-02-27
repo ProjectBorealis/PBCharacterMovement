@@ -279,10 +279,10 @@ void APBPlayerCharacter::ToggleNoClip()
 	MovementPtr->ToggleNoClip();
 }
 
-float APBPlayerCharacter::GetFallSpeed()
+float APBPlayerCharacter::GetFallSpeed(bool bAfterLand)
 {
 	// TODO: Handle landing on props & water
-	return -GetVelocity().Z;
+	return MovementPtr->GetFallSpeed(bAfterLand);
 }
 
 

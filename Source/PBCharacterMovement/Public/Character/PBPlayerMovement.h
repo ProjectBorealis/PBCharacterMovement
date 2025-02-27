@@ -245,6 +245,8 @@ public:
 	bool CanAttemptJump() const override;
 	bool DoJump(bool bClientSimulation) override;
 
+	float GetFallSpeed(bool bAfterLand = false);
+
 	/** Exit crouch slide mode, and stop camera effects */
 	void StopCrouchSliding();
 

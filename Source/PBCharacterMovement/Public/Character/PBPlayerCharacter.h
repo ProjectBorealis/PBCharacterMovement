@@ -100,7 +100,7 @@ public:
 	
 	/** Gets the player's current fall speed */
 	UFUNCTION(Category = "Player Movement", BlueprintCallable)
-	float GetFallSpeed();
+	float GetFallSpeed(bool bAfterLand = false);
 
 	UFUNCTION()
 	void OnCrouch();

@@ -270,6 +270,25 @@ bool UPBPlayerMovement::DoJump(bool bClientSimulation)
 	return false;
 }
 
+float UPBPlayerMovement::GetFallSpeed(bool bAfterLand)
+{
+	FVector FallVelocity = Velocity;
+	if (bAfterLand)
+	{
+		const float GravityStep = GetGravityZ() * GetWorld()->GetDeltaSeconds() * 0.5f;
+		// we need to do another integration step of gravity before we get fall speed
+		if (HasCustomGravity())
+		{
+			SetGravitySpaceZ(FallVelocity, GetGravitySpaceZ(FallVelocity) + GravityStep);
+		}
+		else
+		{
+			FallVelocity.Z += GravityStep;
+		}
+	}
+	return -FallVelocity.Z;
+}
+
 float GetFrictionFromHit(const FHitResult& Hit)
 {
 	float SurfaceFriction = 1.0f;
@@ -994,7 +1013,7 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 		// if we didn't jump, adjust volume for landing
 		if (!bJumped)
 		{
-			const float FallSpeed = PBPlayerCharacter->GetFallSpeed();
+			const float FallSpeed = GetFallSpeed(true);
 			if (FallSpeed > PBPlayerCharacter->GetMinSpeedForFallDamage())
 			{
 				MoveSoundVolume = 1.0f;
