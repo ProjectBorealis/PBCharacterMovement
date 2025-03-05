@@ -178,6 +178,13 @@ void UPBPlayerMovement::InitializeComponent()
 {
 	Super::InitializeComponent();
 	PBPlayerCharacter = Cast<APBPlayerCharacter>(CharacterOwner);
+
+	// Get defaults from BP
+	MaxWalkSpeed = RunSpeed;
+	SpeedMultMin = SprintSpeed * 1.7f;
+	SpeedMultMax = SprintSpeed * 2.5f;
+	DefaultStepHeight = MaxStepHeight;
+	DefaultWalkableFloorZ = GetWalkableFloorZ();
 }
 
 void UPBPlayerMovement::OnRegister()
