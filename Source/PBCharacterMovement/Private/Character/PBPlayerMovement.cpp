@@ -330,13 +330,14 @@ FVector UPBPlayerMovement::HandleSlopeBoosting(const FVector& SlideResult, const
 	const float WallAngle = FMath::Abs(Hit.ImpactNormal.Z);
 	FVector ImpactNormal;
 	// If too extreme, use the more stable hit normal
-	if (WallAngle <= VERTICAL_SLOPE_NORMAL_Z || WallAngle == 1.0f)
+	if (!(WallAngle <= VERTICAL_SLOPE_NORMAL_Z || WallAngle == 1.0f))
 	{
-		ImpactNormal = Normal;
-	}
-	else
-	{
-		ImpactNormal = Hit.ImpactNormal;
+		// Only use new normal if it isn't higher Z, to avoid moving higher than intended.
+		// Similar to how ZLimit works in the Super implementation of this function.
+		if (Hit.ImpactNormal.Z <= ImpactNormal.Z)
+		{
+			ImpactNormal = Hit.ImpactNormal;
+		}
 	}
 	if (bConstrainToPlane)
 	{
