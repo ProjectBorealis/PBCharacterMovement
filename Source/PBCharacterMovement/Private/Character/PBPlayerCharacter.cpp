@@ -228,7 +228,7 @@ void APBPlayerCharacter::OnJumped_Implementation()
 		if (JumpBoost != 1)
 		{
 			// Only boost input in the direction of current movement axis.
-			Input *= FMath::Max(Input.GetSafeNormal2D() | GetCharacterMovement()->Velocity.GetSafeNormal2D(), 0.0f);
+			Input *= FMath::IsNearlyZero(Input.GetSafeNormal2D() | GetCharacterMovement()->Velocity.GetSafeNormal2D()) ? 0.0f : 1.0f;
 		}
 		const float ForwardSpeed = Input | Facing;
 		// Adjust how much the boost is
@@ -247,7 +247,8 @@ void APBPlayerCharacter::OnJumped_Implementation()
 			SpeedAddition -= NewSpeed - MaxBoostedSpeed;
 		}
 
-		if (ForwardSpeed < -MovementPtr->GetMaxAcceleration() * FMath::Sin(0.6981f))
+		const float AccelMagnitude = GetCharacterMovement()->GetCurrentAcceleration().Size2D();
+		if (ForwardSpeed < -AccelMagnitude * FMath::Sin(0.6981f))
 		{
 			// Boost backwards if we're going backwards
 			SpeedAddition *= -1.0f;
