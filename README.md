@@ -89,7 +89,7 @@ applied by default. If you would like to limit the player's air speed, set `move
 
 ## Crouch sliding
 
-Experimental support for crouch sliding is provided by defining `USE_CROUCH_SLIDING=1`. However, some gameplay effects, like camera shakes, sounds, etc have been stripped due to dependencies on some internal gameplay systems. You can implement this for your own game if wanted.
+Experimental support for crouch sliding is provided by setting `bShouldCrouchSlide` to `true`. However, some gameplay effects, like camera shakes, sounds, etc have been stripped due to dependencies on some internal gameplay systems. You can implement this for your own game if wanted.
 
 ## Directional braking
 

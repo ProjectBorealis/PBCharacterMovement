@@ -16,10 +16,6 @@ constexpr float MOVEMENT_DEFAULT_CROUCHJUMPTIME = 0.0f;
 constexpr float MOVEMENT_DEFAULT_UNCROUCHTIME = 0.2f;
 constexpr float MOVEMENT_DEFAULT_UNCROUCHJUMPTIME = 0.8f;
 
-#ifndef USE_CROUCH_SLIDING
-#define USE_CROUCH_SLIDING 0
-#endif
-
 class USoundCue;
 
 constexpr float DesiredGravity = -1143.0f;
@@ -100,6 +96,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
 	float AirSpeedCap;
 
+	/* The vector differential magnitude cap when in air and sliding. This is here to give player less momentum control while sliding on a slope, but giving more control while jumping using AirSpeedCap. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
+	float AirSlideSpeedCap;
+
+	/* Proportion of player input acceleration (0 to disable, 0.5 for half, 2 for double, etc.) to use for the horizontal air dash. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
+	float AirJumpDashMagnitude = 0.0f;
+
+	/* If an air jump resets all horizontal movement. Useful in tandom with air dash to reset all velocity to a new direction. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
+	bool bAirJumpResetsHorizontal = false;
+
 	/** Time to crouch on ground in seconds */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
 	float CrouchTime;
@@ -127,6 +135,30 @@ protected:
 	/** the minimum step height from moving fast */
 	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite)
 	float MinStepHeight;
+
+	/** the fraction of MaxStepHeight to use for step down height, otherwise player enters air move state and lets gravity do the work. */
+	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite)
+	float StepDownHeightFraction;
+
+	/** Friction multiplier to use when on an edge */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float EdgeFrictionMultiplier;
+
+	/** height away from a floor to apply edge friction */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float EdgeFrictionHeight;
+
+	/** distance in the direction of movement to look ahead for the edge */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float EdgeFrictionDist;
+
+	/** only apply edge friction when braking (no acceleration) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	bool bEdgeFrictionOnlyWhenBraking;
+
+	/** apply edge friction when crouching, even if not braking */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float bEdgeFrictionAlwaysWhenCrouching;
 
 	/** Time the player has before applying friction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
@@ -263,7 +295,13 @@ public:
 	void HandleImpact(const FHitResult& Hit, float TimeSlice = 0.0f, const FVector& MoveDelta = FVector::ZeroVector) override;
 	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;
 
-	void TraceCharacterFloor(FHitResult& OutHit);
+	/** called when player does an air jump. can be used for SFX/VFX. */
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnAirJump(int32 JumpTimes);
+
+	float GetFrictionFromHit(const FHitResult& Hit) const;
+	void TraceCharacterFloor(FHitResult& OutHit) const;
+	void TraceLineToFloor(FHitResult& OutHit) const;
 
 	// Acceleration
 	FORCEINLINE FVector GetAcceleration() const { return Acceleration; }
@@ -304,11 +342,20 @@ public:
 
 private:
 	float DefaultStepHeight;
+	float DefaultSpeedMultMin;
+	float DefaultSpeedMultMax;
 	float DefaultWalkableFloorZ;
 	float SurfaceFriction;
 	TWeakObjectPtr<UPrimitiveComponent> OldBase;
+
 	/** If we have done an initial landing */
 	bool bHasEverLanded = false;
+
+	/** if we're currently sliding in air */
+	bool bSlidingInAir = false;
+
+	/** if we were sliding in air in the prior frame */
+	bool bWasSlidingInAir = false;
 
 	bool bHasDeferredMovementMode;
 	EMovementMode DeferredMovementMode;
