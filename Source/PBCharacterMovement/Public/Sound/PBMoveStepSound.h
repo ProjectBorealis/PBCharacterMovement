@@ -52,27 +52,27 @@ private:
 
 	/** The list of sounds to randomly choose from when stepping left */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> StepLeftSounds;
+	TArray<TObjectPtr<USoundCue>> StepLeftSounds;
 
 	/** The list of sounds to randomly choose from when stepping right */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> StepRightSounds;
+	TArray<TObjectPtr<USoundCue>> StepRightSounds;
 
 	/** The list of sounds to randomly choose from when sprinting left */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> SprintLeftSounds;
+	TArray<TObjectPtr<USoundCue>> SprintLeftSounds;
 
 	/** The list of sounds to randomly choose from when sprinting right */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> SprintRightSounds;
+	TArray<TObjectPtr<USoundCue>> SprintRightSounds;
 
 	/** The list of sounds to randomly choose from when jumping */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> JumpSounds;
+	TArray<TObjectPtr<USoundCue>> JumpSounds;
 
 	/** The list of sounds to randomly choose from when landing */
 	UPROPERTY(EditDefaultsOnly, Category = Sounds)
-	TArray<USoundCue*> LandSounds;
+	TArray<TObjectPtr<USoundCue>> LandSounds;
 
 	UPROPERTY(EditDefaultsOnly, Category = Volume)
 	float WalkVolume = 0.2f;
