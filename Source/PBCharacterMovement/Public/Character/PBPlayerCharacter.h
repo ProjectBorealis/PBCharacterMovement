@@ -223,7 +223,7 @@ protected:
 private:
 	/** pawn mesh: 1st person view */
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	USkeletalMeshComponent* Mesh1P;
+	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 
 	/** cached default eye height */
 	float DefaultBaseEyeHeight;
