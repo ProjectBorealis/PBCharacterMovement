@@ -22,22 +22,22 @@ public:
 	TEnumAsByte<EPhysicalSurface> GetSurfaceMaterial() const { return SurfaceMaterial; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetStepLeftSounds() const { return StepLeftSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetStepLeftSounds() const { return StepLeftSounds; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetStepRightSounds() const { return StepRightSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetStepRightSounds() const { return StepRightSounds; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetSprintLeftSounds() const { return SprintLeftSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetSprintLeftSounds() const { return SprintLeftSounds; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetSprintRightSounds() const { return SprintRightSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetSprintRightSounds() const { return SprintRightSounds; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetJumpSounds() const { return JumpSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetJumpSounds() const { return JumpSounds; }
 
 	UFUNCTION()
-	TArray<USoundCue*> GetLandSounds() const { return LandSounds; }
+	const TArray<TObjectPtr<USoundCue>>& GetLandSounds() const { return LandSounds; }
 
 	UFUNCTION()
 	float GetWalkVolume() const { return WalkVolume; }
