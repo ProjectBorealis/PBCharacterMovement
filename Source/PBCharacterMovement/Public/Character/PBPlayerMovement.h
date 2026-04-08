@@ -158,7 +158,7 @@ protected:
 
 	/** apply edge friction when crouching, even if not braking */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float bEdgeFrictionAlwaysWhenCrouching;
+	bool bEdgeFrictionAlwaysWhenCrouching;
 
 	/** Time the player has before applying friction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Jumping / Falling")
@@ -285,12 +285,8 @@ public:
 	/** If the crouch lock should be toggled on or off, crouch lock locks the player in their crouch state */
 	void ToggleCrouchLock(bool bLock);
 
-	void TwoWallAdjust(FVector& OutDelta, const FHitResult& Hit, const FVector& OldHitNormal) const override;
-	float SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal, FHitResult& Hit, bool bHandleImpact = false) override;
-	FVector ComputeSlideVector(const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
 	FVector HandleSlopeBoosting(const FVector& SlideResult, const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const override;
 	bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
-	bool IsWithinEdgeTolerance(const FVector& CapsuleLocation, const FVector& TestImpactPoint, const float CapsuleRadius) const override;
 	bool ShouldCheckForValidLandingSpot(float DeltaTime, const FVector& Delta, const FHitResult& Hit) const override;
 	void HandleImpact(const FHitResult& Hit, float TimeSlice = 0.0f, const FVector& MoveDelta = FVector::ZeroVector) override;
 	bool IsValidLandingSpot(const FVector& CapsuleLocation, const FHitResult& Hit) const override;

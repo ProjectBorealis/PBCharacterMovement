@@ -355,21 +355,6 @@ float UPBPlayerMovement::GetFallSpeed(bool bAfterLand)
 	return -FallVelocity.Z;
 }
 
-void UPBPlayerMovement::TwoWallAdjust(FVector& Delta, const FHitResult& Hit, const FVector& OldHitNormal) const
-{
-	Super::TwoWallAdjust(Delta, Hit, OldHitNormal);
-}
-
-float UPBPlayerMovement::SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal, FHitResult& Hit, bool bHandleImpact)
-{
-	return Super::SlideAlongSurface(Delta, Time, Normal, Hit, bHandleImpact);
-}
-
-FVector UPBPlayerMovement::ComputeSlideVector(const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const
-{
-	return Super::ComputeSlideVector(Delta, Time, Normal, Hit);
-}
-
 FVector UPBPlayerMovement::HandleSlopeBoosting(const FVector& SlideResult, const FVector& Delta, const float Time, const FVector& Normal, const FHitResult& Hit) const
 {
 	if (IsOnLadder() || bCheatFlying)
@@ -412,7 +397,12 @@ bool UPBPlayerMovement::ShouldCatchAir(const FFindFloorResult& OldFloor, const F
 	const float OldSurfaceFriction = GetFrictionFromHit(OldFloor.HitResult);
 
 	// As we get faster, make our speed multiplier smaller (so it scales with smaller friction)
-	const float SpeedMult = SpeedMultMax / Velocity.Size2D();
+	const float Speed2D = Velocity.Size2D();
+	if (Speed2D < KINDA_SMALL_NUMBER)
+	{
+		return false;
+	}
+	const float SpeedMult = SpeedMultMax / Speed2D;
 	const bool bSliding = OldSurfaceFriction * SpeedMult < 0.5f;
 
 	// See if we got less steep or are continuing at the same slope
@@ -437,11 +427,6 @@ bool UPBPlayerMovement::ShouldCatchAir(const FFindFloorResult& OldFloor, const F
 	}
 
 	return Super::ShouldCatchAir(OldFloor, NewFloor);
-}
-
-bool UPBPlayerMovement::IsWithinEdgeTolerance(const FVector& CapsuleLocation, const FVector& TestImpactPoint, const float CapsuleRadius) const
-{
-	return Super::IsWithinEdgeTolerance(CapsuleLocation, TestImpactPoint, CapsuleRadius);
 }
 
 bool UPBPlayerMovement::ShouldCheckForValidLandingSpot(float DeltaTime, const FVector& Delta, const FHitResult& Hit) const
@@ -1028,19 +1013,19 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 
 	if (MoveSound)
 	{
-		TArray<USoundCue*> MoveSoundCues;
+		const TArray<TObjectPtr<USoundCue>>* MoveSoundCues = nullptr;
 
 		if (bSprinting && !IsOnLadder())
 		{
-			MoveSoundCues = StepSide ? MoveSound->GetSprintLeftSounds() : MoveSound->GetSprintRightSounds();
+			MoveSoundCues = StepSide ? &MoveSound->GetSprintLeftSounds() : &MoveSound->GetSprintRightSounds();
 		}
-		if (!bSprinting || IsOnLadder() || MoveSoundCues.Num() < 1)
+		if (!MoveSoundCues || MoveSoundCues->Num() < 1)
 		{
-			MoveSoundCues = StepSide ? MoveSound->GetStepLeftSounds() : MoveSound->GetStepRightSounds();
+			MoveSoundCues = StepSide ? &MoveSound->GetStepLeftSounds() : &MoveSound->GetStepRightSounds();
 		}
 
 		// Error handling - Sounds not valid
-		if (MoveSoundCues.Num() < 1) // Sounds array not valid
+		if (MoveSoundCues->Num() < 1) // Sounds array not valid
 		{
 			// Get default sounds
 			MoveSound = GetMoveStepSoundBySurface(SurfaceType_Default);
@@ -1053,18 +1038,18 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 			if (bSprinting)
 			{
 				// Get default sprint sounds
-				MoveSoundCues = StepSide ? MoveSound->GetSprintLeftSounds() : MoveSound->GetSprintRightSounds();
+				MoveSoundCues = StepSide ? &MoveSound->GetSprintLeftSounds() : &MoveSound->GetSprintRightSounds();
 			}
 
-			if (!bSprinting || MoveSoundCues.Num() < 1)
+			if (!MoveSoundCues || MoveSoundCues->Num() < 1)
 			{
 				// If bSprinting = true, the code enter this IF only if the updated MoveSoundCues with default sprint sounds is not valid (length < 1)
 				// If bSprinting = false, the code enter this IF because the walk sounds are not valid and must try to pick them from the default surface
 				// Get default walk sounds
-				MoveSoundCues = StepSide ? MoveSound->GetStepLeftSounds() : MoveSound->GetStepRightSounds();
+				MoveSoundCues = StepSide ? &MoveSound->GetStepLeftSounds() : &MoveSound->GetStepRightSounds();
 			}
 
-			if (MoveSoundCues.Num() < 1)
+			if (MoveSoundCues->Num() < 1)
 			{
 				// SurfaceType_Default sounds not found, return
 				return;
@@ -1073,7 +1058,7 @@ void UPBPlayerMovement::PlayMoveSound(const float DeltaTime)
 
 		// Sound array is valid, play a sound
 		// If the array has just one element pick that one skipping random
-		USoundCue* Sound = MoveSoundCues[MoveSoundCues.Num() == 1 ? 0 : FMath::RandRange(0, MoveSoundCues.Num() - 1)];
+		USoundCue* Sound = (*MoveSoundCues)[MoveSoundCues->Num() == 1 ? 0 : FMath::RandRange(0, MoveSoundCues->Num() - 1)];
 
 		Sound->VolumeMultiplier = MoveSoundVolume;
 
@@ -1151,7 +1136,7 @@ void UPBPlayerMovement::PlayJumpSound(const FHitResult& Hit, bool bJumped)
 			return;
 		}
 
-		const TArray<USoundCue*>& MoveSoundCues = bJumped ? MoveSound->GetJumpSounds() : MoveSound->GetLandSounds();
+		const TArray<TObjectPtr<USoundCue>>& MoveSoundCues = bJumped ? MoveSound->GetJumpSounds() : MoveSound->GetLandSounds();
 
 		if (MoveSoundCues.Num() < 1)
 		{
@@ -1877,6 +1862,11 @@ float UPBPlayerMovement::GetMaxSpeed() const
 	}
 
 	if (MovementMode == MOVE_Flying && !IsOnLadder() && !bCheatFlying)
+	{
+		return Super::GetMaxSpeed();
+	}
+
+	if (!PBPlayerCharacter)
 	{
 		return Super::GetMaxSpeed();
 	}

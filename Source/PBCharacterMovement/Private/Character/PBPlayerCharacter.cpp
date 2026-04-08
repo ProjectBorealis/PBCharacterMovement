@@ -117,6 +117,10 @@ void APBPlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 
 void APBPlayerCharacter::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser)
 {
+	if (!DamageEvent.DamageTypeClass)
+	{
+		return;
+	}
 	UDamageType const* const DmgTypeCDO = DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>();
 	if (GetCharacterMovement())
 	{
