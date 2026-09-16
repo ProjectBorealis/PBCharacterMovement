@@ -10,6 +10,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PhysicsEngine/PhysicsSettings.h"
 #include "Sound/SoundCue.h"
+#include "Engine.h"
 
 #if WITH_EDITOR
 #include "DrawDebugHelpers.h"
@@ -561,7 +562,7 @@ void UPBPlayerMovement::OnMovementModeChanged(EMovementMode PreviousMovementMode
 
 	if (!bDidPlayJumpSound)
 	{
-		if (MovementMode == MOVE_Walking && (GetMovementBase() || CurrentFloor.bBlockingHit))
+		if (MovementMode == MOVE_Walking && (GetMovementBaseObject() || CurrentFloor.bBlockingHit))
 		{
 			// This happens in a couple of cases.
 			// First, on initial player spawn, we default to walking.

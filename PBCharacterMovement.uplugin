@@ -7,7 +7,12 @@
 	"Category": "Other",
 	"CreatedBy": "Project Borealis",
 	"CreatedByURL": "https://www.projectborealis.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EngineVersion": "5.8.0",
 	"CanContainContent": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "PBCharacterMovement",

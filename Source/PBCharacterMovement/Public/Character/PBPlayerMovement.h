@@ -317,7 +317,7 @@ public:
 	float GetCameraRoll();
 
 	/** Is this player on a ladder? */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(Category = "Player Movement", BlueprintCallable)
 	bool IsOnLadder() const;
 
 	/** Return the speed used to climb ladders */

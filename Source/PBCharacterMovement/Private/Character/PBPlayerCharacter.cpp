@@ -8,6 +8,7 @@
 #include "HAL/IConsoleManager.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #include "Character/PBPlayerMovement.h"
 

@@ -9,6 +9,7 @@
 class USoundCue;
 class UPBMoveStepSound;
 class UPBPlayerMovement;
+class USkeletalMeshComponent;
 
 inline float SimpleSpline(float Value)
 {
@@ -112,7 +113,7 @@ public:
 	void CrouchToggle();
 
 	/** */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(Category = "Player Movement", BlueprintCallable)
 	bool CanWalkOn(const FHitResult& Hit) const;
 
 	TSubclassOf<UPBMoveStepSound>* GetMoveStepSound(TEnumAsByte<EPhysicalSurface> Surface) { return MoveStepSounds.Find(Surface); }
